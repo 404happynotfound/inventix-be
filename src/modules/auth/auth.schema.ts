@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { registry } from '../../config/openapi';
-import { UserSchema } from '../user/user.schema';
+import { AkunSchema, PeranEnum } from '../akun/akun.schema';
 
 export const RegisterRequestSchema = registry.register(
   'RegisterRequest',
@@ -8,7 +8,8 @@ export const RegisterRequestSchema = registry.register(
     body: z.object({
       email: z.email().openapi({ example: 'user@example.com' }),
       password: z.string().min(6).openapi({ example: 'secret123' }),
-      name: z.string().min(2).openapi({ example: 'John Doe' }),
+      nama: z.string().min(2).openapi({ example: 'John Doe' }),
+      peran: PeranEnum.default('PEMBELI').openapi({ example: 'PEMBELI' }),
     }),
   })
 );
@@ -28,7 +29,7 @@ export const AuthResponseSchema = registry.register(
   z.object({
     data: z.object({
       token: z.string(),
-      user: UserSchema,
+      user: AkunSchema,
     }),
     message: z.string(),
   })
