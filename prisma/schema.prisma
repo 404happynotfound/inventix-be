@@ -6,11 +6,191 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// Enum untuk role/peran pengguna
+enum Peran {
+  ADMIN
+  SUPPLIER
+  PEMBELI
+}
+
+// Enum untuk status akun
+enum StatusAkun {
+  AKTIF
+  NONAKTIF
+  SUSPENDED
+}
+
+// Enum untuk status purchase order
+enum StatusPO {
+  PENDING
+  DIKONFIRMASI
+  DIBATALKAN
+}
+
+// Enum untuk status supplier
+enum StatusSupplier {
+  AKTIF
+  NONAKTIF
+  BLACKLIST
+}
+
+// Enum untuk jenis transaksi
+enum JenisTransaksi {
+  MASUK
+  KELUAR
+  LAINNYA
+}
+
+// Tabel Akun (User)
+model akun {
+  uniqueID        Int      @id @default(autoincrement())
+  nama            String
+  email           String   @unique
+  password        String
+  peran           Peran
+  dibuat_pada     DateTime @default(now())
+  diperbarui_pada DateTime @updatedAt
+
+  // Relasi
+  riwayataktivitas   riwayataktivitas[]
+  supplier           supplier?
+  purchaseorder      purchaseorder[]
+  pembeliantransaksi pembeliantransaksi[]
+}
+
+// Tabel Supplier
+model supplier {
+  uniqueID          Int     @id @default(autoincrement())
+  user_id           Int     @unique
+  nama              String
+  alamat            String
+  email             String
+  nomor_telepon     String
+  deskripsi_catatan String?
+
+  // Relasi
+  akun          akun            @relation(fields: [user_id], references: [uniqueID], onDelete: Cascade)
+  stok          stok[]
+  purchaseorder purchaseorder[]
+
+  @@index([user_id])
+}
+
+// Tabel Stok
+model stok {
+  uniqueID           Int      @id @default(autoincrement())
+  nama               String
+  kode_sku           String   @unique
+  klasifikasi_id     Int
+  supplier_id        Int
+  satuan             String
+  jumlah_saat_ini    Int
+  tanggal_kedatangan DateTime
+  lokasi_gudang      String
+  dibuat_pada        DateTime @default(now())
+  diperbarui_pada    DateTime @updatedAt
+
+  // Relasi
+  klasifikasi        klasifikasistok      @relation(fields: [klasifikasi_id], references: [uniqueID])
+  supplier           supplier             @relation(fields: [supplier_id], references: [uniqueID], onDelete: Cascade)
+  pembeliantransaksi pembeliantransaksi[]
+  detailpo           detailpo[]
+
+  @@index([klasifikasi_id])
+  @@index([supplier_id])
+}
+
+// Tabel Klasifikasi Stok
+model klasifikasistok {
+  uniqueID  Int     @id @default(autoincrement())
+  jenis     String
+  deskripsi String?
+
+  // Relasi
+  stok stok[]
+}
+
+// Tabel Riwayat Aktivitas
+model riwayataktivitas {
+  uniqueID     Int      @id @default(autoincrement())
+  akun_id      Int
+  nama_label   String
+  record_id    Int
+  aksi         String // buat/edit/hapus
+  data_lama    Json?
+  data_baru    Json?
+  terjadi_pada DateTime @default(now())
+
+  // Relasi
+  akun akun @relation(fields: [akun_id], references: [uniqueID], onDelete: Cascade)
+
+  @@index([akun_id])
+}
+
+// Tabel Purchase Order
+model purchaseorder {
+  uniqueID                    Int            @id @default(autoincrement())
+  nomor_po                    String         @unique
+  dibuat_oleh                 Int
+  disetujui_oleh              Int?
+  supplier_id                 Int
+  status                      StatusPO       @default(PENDING)
+  status_supplier             StatusSupplier
+  total_nilai                 Decimal
+  tanggal_po                  DateTime       @default(now())
+  tanggal_disetujui           DateTime?
+  tanggal_konfirmasi_supplier DateTime?
+  tanggal_kedatangan          DateTime?
+  tanggal_diharapkan          DateTime?
+  dibuat_pada                 DateTime       @default(now())
+  diperbarui_pada             DateTime       @updatedAt
+  catatan                     String?
+
+  // Relasi
+  akunPembuat akun       @relation(fields: [dibuat_oleh], references: [uniqueID])
+  supplier    supplier   @relation(fields: [supplier_id], references: [uniqueID], onDelete: Cascade)
+  detailpo    detailpo[]
+
+  @@index([dibuat_oleh])
+  @@index([supplier_id])
+}
+
+// Tabel Detail PO
+model detailpo {
+  uniqueID        Int     @id @default(autoincrement())
+  po_id           Int
+  stok_id         Int
+  jumlah_dipesan  Int
+  jumlah_diterima Int
+  harga_satuan    Decimal
+
+  // Relasi
+  purchaseorder      purchaseorder        @relation(fields: [po_id], references: [uniqueID], onDelete: Cascade)
+  stok               stok                 @relation(fields: [stok_id], references: [uniqueID])
+  pembeliantransaksi pembeliantransaksi[]
+
+  @@index([po_id])
+  @@index([stok_id])
+}
+
+// Tabel Pembelian/Transaksi
+model pembeliantransaksi {
+  uniqueID       Int            @id @default(autoincrement())
+  akun_id        Int
+  stok_id        Int
+  detail_po_id   Int
+  jenis          JenisTransaksi
+  jumlah         Int
+  jumlah_sebelum Int
+  jumlah_sesudah Int
+  dibuat_pada    DateTime       @default(now())
+
+  // Relasi
+  akun     akun     @relation(fields: [akun_id], references: [uniqueID], onDelete: Cascade)
+  stok     stok     @relation(fields: [stok_id], references: [uniqueID], onDelete: Cascade)
+  detailpo detailpo @relation(fields: [detail_po_id], references: [uniqueID], onDelete: Cascade)
+
+  @@index([akun_id])
+  @@index([stok_id])
+  @@index([detail_po_id])
 }
