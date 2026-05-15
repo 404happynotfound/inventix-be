@@ -1,8 +1,4 @@
-# Backend Architecture — Express.js TypeScript
-
-REST API dibangun dengan pendekatan **schema-driven** dan **strict validation dua arah**, memastikan contract API selalu konsisten dari request hingga response.
-
----
+# Inventix Backend
 
 ## Tech Stack
 
@@ -68,15 +64,14 @@ Setiap lapisan memiliki tanggung jawab yang jelas dan tidak tumpang tindih (Cont
 
 ---
 
-## Panduan Penggunaan Lengkap
+## Panduan Pengembangan
 
 ### 1. Menambah Module Baru
 Setiap fitur baru harus dibuat dalam folder di `src/modules/`. Contoh membuat module `product`:
 1.  **`product.schema.ts`**: Definisikan Zod object untuk request body dan response. Daftarkan ke `registry` OpenAPI.
-2.  **`product.repository.ts`**: Tambahkan method query Prisma.
-3.  **`product.service.ts`**: Implementasikan business logic.
-4.  **`product.controller.ts`**: Hubungkan request ke service.
-5.  **`product.route.ts`**: Definisikan endpoint dan pasang middleware `validateRequest` & `validateResponse`.
+2.  **`product.service.ts`**: Implementasikan business logic dan query Prisma secara langsung.
+3.  **`product.controller.ts`**: Hubungkan request ke service.
+4.  **`product.route.ts`**: Definisikan endpoint dan pasang middleware `validateRequest` & `validateResponse`.
 
 ### 2. Validasi Dua Arah (Strict Contract)
 Gunakan middleware `validateResponse` di route untuk memastikan output sesuai kontrak:
@@ -97,12 +92,11 @@ src/
 │   ├── prisma.ts
 │   └── openapi.ts
 ├── modules/
-│   ├── user/
-│   │   ├── user.schema.ts        ← request + response (digabung)
-│   │   ├── user.controller.ts
-│   │   ├── user.service.ts
-│   │   ├── user.repository.ts
-│   │   └── user.route.ts
+│   ├── akun/
+│   │   ├── akun.schema.ts        ← request + response (digabung)
+│   │   ├── akun.controller.ts
+│   │   ├── akun.service.ts
+│   │   └── akun.route.ts
 │   └── auth/
 │       ├── auth.schema.ts
 │       ├── auth.controller.ts
@@ -129,8 +123,7 @@ Client
   → Validate Request (Zod)
   → Auth Middleware (JWT)
   → Controller
-  → Service
-  → Repository (Prisma)
+  → Service (Prisma)
   → Validate Response (Zod)
   → Response ke Client
 ```
@@ -171,13 +164,5 @@ Client
 - Semua request & response divalidasi menggunakan Zod.
 - Semua error dialirkan melalui global error handler.
 - Request schema dan response schema berada dalam satu file module.
-- Query database hanya dilakukan dari layer Repository.
+- Query database dilakukan langsung dari layer Service menggunakan Prisma.
 
----
-
-## Scripts yang Tersedia
-
-- `npm run dev`: Menjalankan server development dengan `tsx watch`.
-- `npm run prisma:migrate`: Membuat dan menjalankan migrasi database.
-- `npm run prisma:studio`: Membuka GUI untuk melihat data database.
-- `npm run lint`: Menjalankan type-check TypeScript.
