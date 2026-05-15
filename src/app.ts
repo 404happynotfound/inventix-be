@@ -26,12 +26,6 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/akun', akunRoutes);
-// app.use('/api/supplier', supplierRoutes);
-// app.use('/api/stok', stokRoutes);
-// app.use('/api/klasifikasi-stok', klasifikasiStokRoutes);
-// app.use('/api/purchase-order', purchaseOrderRoutes);
-// app.use('/api/pembelian-transaksi', pembelianTransaksiRoutes);
-// app.use('/api/riwayat-aktivitas', riwayatAktivitasRoutes);
 
 // OpenAPI Documentation Route
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(generateOpenApiDocument()));
