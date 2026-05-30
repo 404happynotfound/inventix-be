@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -141,7 +142,7 @@ model Purchase_Order {
   supplier_id                 Int
   status                      StatusPO  @default(DRAFT)
   status_supplier             StatusSupplierPO @default(MENUNGGU_KONFIRMASI)
-  total_nilai                 Decimal   @db.Decimal(15, 2)
+  total_nilai                 BigInt
   tanggal_po                  DateTime  @default(now())
   tanggal_disetujui           DateTime?
   tanggal_konfirmasi_supplier DateTime?
@@ -164,7 +165,7 @@ model Detail_PO {
   stok_id          Int
   jumlah_dipesan   Int
   jumlah_diterima  Int      @default(0)
-  harga_satuan     Decimal  @db.Decimal(15, 2)
+  harga_satuan     Int
   dibuat_pada      DateTime @default(now())
 
   // Relasi ke tabel lainnya
