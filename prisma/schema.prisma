@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -8,18 +9,185 @@ datasource db {
 
 // Enum untuk role/peran pengguna
 enum Peran {
+  OWNER
   ADMIN
   SUPPLIER
+  GUDANG
   PEMBELI
 }
 
+// Enum untuk jenis aksi
+enum Aksi {
+  buat
+  edit
+  hapus
+}
+
+// Enum untuk jenis transaksi yang dilakukan
+enum JenisTransaksi {
+  masuk
+  keluar
+  lainnya
+}
+
+// Enum untuk status Purchase Order
+enum StatusPO {
+  DRAFT
+  MENUNGGU_PERSETUJUAN
+  DISETUJUI
+  DITOLAK
+  DIKIRIM
+  SELESAI
+  DIBATALKAN
+}
+
+// Enum untuk status Purchase Order pada akun supplier
+enum StatusSupplierPO {
+  MENUNGGU_KONFIRMASI
+  DIKONFIRMASI
+  DITOLAK
+}
+
+//TABEL-TABEL
+
 // Tabel Akun (User)
-model akun {
-  uniqueID        Int      @id @default(autoincrement())
+model Akun {
+  id              Int      @id @default(autoincrement())
   nama            String
   email           String   @unique
   password        String
   peran           Peran
   dibuat_pada     DateTime @default(now())
   diperbarui_pada DateTime @updatedAt
+
+  //Relasi ke tabel lainnya
+  supplier            Supplier?         
+  transaksi_stok      Transaksi_Stok[]  
+  po_dibuat           Purchase_Order[]  @relation("PO_Dibuat")
+  po_disetujui        Purchase_Order[]  @relation("PO_Disetujui")
+  riwayat_aktivitas   Riwayat_Aktivitas[]
+}
+
+// Tabel Stok
+model Stok {
+  id                    Int       @id @default(autoincrement())
+  nama                  String
+  kode_sku              String    @unique
+  klasifikasi_id        Int
+  supplier_id           Int
+  satuan                String
+  jumlah_saat_ini       Int       @default(0)
+  tanggal_kedaluwarsa   DateTime?
+  dibuat_pada           DateTime  @default(now())
+  diperbarui_pada       DateTime  @updatedAt
+
+  //Relasi ke tabel lainnya
+  klasifikasi           Klasifikasi_Stok  @relation(fields: [klasifikasi_id], references: [id])
+  supplier              Supplier          @relation(fields: [supplier_id], references: [id])
+  transaksi_stok        Transaksi_Stok[]
+  detail_po             Detail_PO[]
+}
+
+// Tabel Klasifikasi Stok
+model Klasifikasi_Stok {
+  id                Int       @id @default(autoincrement())
+  jenis             String
+  deskripsi         String?
+  dibuat_pada       DateTime  @default(now())
+  diperbarui_pada   DateTime  @updatedAt
+
+  //Relasi ke tabel lainnya
+  stok    Stok[]
+}
+
+// Tabel Supplier
+model Supplier {
+  id                Int       @id @default(autoincrement())
+  nama              String
+  alamat            String?
+  email             String?
+  nomor_telepon     String?
+  deskripsi         String?
+  user_id           Int       @unique
+  dibuat_pada       DateTime  @default(now())
+  diperbarui_pada   DateTime  @updatedAt
+
+  //Relasi ke tabel lainnya
+  akun              Akun              @relation(fields: [user_id], references: [id])
+  stok              Stok[]
+  purchase_orders   Purchase_Order[]  
+}
+
+// Tabel Riwayat Aktivitas (Audit Log)
+model Riwayat_Aktivitas {
+  id              Int       @id @default(autoincrement())
+  akun_id         Int
+  nama_tabel      String
+  record_id       String
+  aksi            Aksi
+  data_lama       Json?
+  data_baru       Json?
+  dilakukan_pada  DateTime  @default(now())
+
+  // Relasi ke tabel lainnya
+  akun    Akun    @relation(fields: [akun_id], references: [id])
+}
+
+// Tabel Purchase_Order
+model Purchase_Order {
+  id                          Int       @id @default(autoincrement())
+  nomor_po                    String    @unique
+  dibuat_oleh                 Int
+  disetujui_oleh              Int?
+  supplier_id                 Int
+  status                      StatusPO  @default(DRAFT)
+  status_supplier             StatusSupplierPO @default(MENUNGGU_KONFIRMASI)
+  total_nilai                 BigInt
+  tanggal_po                  DateTime  @default(now())
+  tanggal_disetujui           DateTime?
+  tanggal_konfirmasi_supplier DateTime?
+  tanggal_kedatangan          DateTime?
+  catatan                     String?
+  dibuat_pada                 DateTime  @default(now())
+  diperbarui_pada             DateTime  @updatedAt
+
+  // Relasi ke tabel lainnya
+  pembuat          Akun         @relation("PO_Dibuat", fields: [dibuat_oleh], references: [id])
+  penyetuju        Akun?        @relation("PO_Disetujui", fields: [disetujui_oleh], references: [id])
+  supplier         Supplier     @relation(fields: [supplier_id], references: [id])
+  detail_po        Detail_PO[]
+}
+
+// Tabel Detail dari Purchase Order
+model Detail_PO {
+  id               Int      @id @default(autoincrement())
+  po_id            Int
+  stok_id          Int
+  jumlah_dipesan   Int
+  jumlah_diterima  Int      @default(0)
+  harga_satuan     Int
+  dibuat_pada      DateTime @default(now())
+
+  // Relasi ke tabel lainnya
+  purchase_order   Purchase_Order   @relation(fields: [po_id], references: [id])
+  stok             Stok             @relation(fields: [stok_id], references: [id])
+  transaksi_stok   Transaksi_Stok[]
+}
+
+// Tabel Transaki Stok (Masuk/Keluar/Lainnya)
+model Transaksi_Stok {
+  id               Int          @id @default(autoincrement())
+  akun_id          Int
+  stok_id          Int
+  detail_po_id     Int?
+  jenis            JenisTransaksi
+  jumlah           Int
+  jumlah_sebelum   Int
+  jumlah_sesudah   Int
+  dibuat_pada      DateTime        @default(now())
+
+  // Relasi ke tabel lainnya
+  akun             Akun       @relation(fields: [akun_id], references: [id])
+  stok             Stok       @relation(fields: [stok_id], references: [id])
+  detail_po        Detail_PO? @relation(fields: [detail_po_id], references: [id])
 }
