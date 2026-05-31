@@ -12,6 +12,10 @@ import klasifikasiStokRoutes from './modules/klasifikasi-stok/klasifikasi-stok.r
 import purchaseOrderRoutes from './modules/purchase-order/purchase-order.route';
 import pembelianTransaksiRoutes from './modules/pembelian-transaksi/pembelian-transaksi.route';
 import riwayatAktivitasRoutes from './modules/riwayat-aktivitas/riwayat-aktivitas.route';
+import notifikasiRoutes from './modules/notifikasi/notifikasi.route';
+import laporanPengeluaranRoutes from './modules/laporan-pengeluaran/laporan-pengeluaran.route';
+import dashboardRoutes from './modules/dashboard/dashboard.route';
+import wasteRoutes from './modules/waste/waste.route';
 import { errorHandler } from './middlewares/errorHandler';
 import { httpLogger } from './middlewares/logger';
 
@@ -37,6 +41,10 @@ app.use('/api/klasifikasi-stok', klasifikasiStokRoutes);
 app.use('/api/purchase-order', purchaseOrderRoutes);
 app.use('/api/pembelian-transaksi', pembelianTransaksiRoutes);
 app.use('/api/riwayat-aktivitas', riwayatAktivitasRoutes);
+app.use('/api/v1/notifikasi', notifikasiRoutes);
+app.use('/api/v1/laporan', laporanPengeluaranRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/waste', wasteRoutes);
 
 // OpenAPI Documentation Route
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(generateOpenApiDocument()));

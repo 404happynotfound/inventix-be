@@ -66,6 +66,7 @@ model Akun {
   po_dibuat           Purchase_Order[]  @relation("PO_Dibuat")
   po_disetujui        Purchase_Order[]  @relation("PO_Disetujui")
   riwayat_aktivitas   Riwayat_Aktivitas[]
+  waste               Waste[]
 }
 
 // Tabel Stok
@@ -86,6 +87,8 @@ model Stok {
   supplier              Supplier          @relation(fields: [supplier_id], references: [id])
   transaksi_stok        Transaksi_Stok[]
   detail_po             Detail_PO[]
+  notifikasi            Notifikasi[]
+  waste                 Waste[]
 }
 
 // Tabel Klasifikasi Stok
@@ -190,4 +193,39 @@ model Transaksi_Stok {
   akun             Akun       @relation(fields: [akun_id], references: [id])
   stok             Stok       @relation(fields: [stok_id], references: [id])
   detail_po        Detail_PO? @relation(fields: [detail_po_id], references: [id])
+}
+
+// Enum untuk jenis notifikasi
+enum JenisNotifikasi {
+  stok_minimum
+  kadaluwarsa
+}
+
+// Tabel Notifikasi
+model Notifikasi {
+  id              Int               @id @default(autoincrement())
+  id_barang       Int
+  jenis_notif     JenisNotifikasi
+  pesan           String?
+  is_read         Boolean           @default(false)
+  dibuat_pada     DateTime          @default(now())
+
+  // Relasi ke tabel lainnya
+  barang          Stok              @relation(fields: [id_barang], references: [id])
+}
+
+// Tabel Waste
+model Waste {
+  id                  Int       @id @default(autoincrement())
+  id_barang           Int
+  id_akun             Int
+  jumlah_terbuang     Int       @default(0)
+  estimasi_kerugian   Decimal?
+  tanggal_waste       DateTime  @default(now())
+  keterangan          String?
+  dibuat_pada         DateTime  @default(now())
+
+  // Relasi ke tabel lainnya
+  barang              Stok      @relation(fields: [id_barang], references: [id])
+  akun                Akun      @relation(fields: [id_akun], references: [id])
 }
