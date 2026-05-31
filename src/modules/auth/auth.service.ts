@@ -46,7 +46,7 @@ export class AuthService {
 
   private generateAuthResponse(user: any) {
     const token = jwt.sign(
-      { uniqueID: user.uniqueID, email: user.email }, 
+      { id: user.id, email: user.email }, 
       env.JWT_SECRET, 
       { expiresIn: '1d' }
     );

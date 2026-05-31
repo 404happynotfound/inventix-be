@@ -6,7 +6,7 @@ export const PeranEnum = z.enum(['ADMIN', 'SUPPLIER', 'PEMBELI']);
 export const AkunSchema = registry.register(
   'Akun',
   z.object({
-    uniqueID: z.coerce.number().int().openapi({ example: 1 }),
+    id: z.coerce.number().int().openapi({ example: 1 }),
     nama: z.string().openapi({ example: 'John Doe' }),
     email: z.string().email().openapi({ example: 'user@example.com' }),
     peran: PeranEnum.openapi({ example: 'PEMBELI' }),

@@ -3,7 +3,7 @@ import prisma from '../../config/prisma';
 import { NotFoundError, ConflictError } from '../../utils/errors';
 import { CreateAkunSchema, UpdateAkunSchema } from './akun.schema';
 import { z } from 'zod';
-import { akun, Prisma } from '@prisma/client';
+import { Akun, Prisma } from '../../../generated/prisma';
 
 type CreateAkunInput = z.infer<typeof CreateAkunSchema>['body'];
 type UpdateAkunInput = z.infer<typeof UpdateAkunSchema>['body'];
@@ -14,8 +14,8 @@ export class AkunService {
     return akuns.map((akun) => this.omitPassword(akun));
   }
 
-  async getById(uniqueID: number) {
-    const akun = await prisma.akun.findUnique({ where: { uniqueID } });
+  async getById(id: number) {
+    const akun = await prisma.akun.findUnique({ where: { id } });
     if (!akun) {
       throw new NotFoundError('Account not found', 'ACCOUNT_NOT_FOUND');
     }
@@ -39,34 +39,34 @@ export class AkunService {
     return this.omitPassword(user);
   }
 
-  async update(uniqueID: number, data: UpdateAkunInput) {
-    await this.getById(uniqueID);
+  async update(id: number, data: UpdateAkunInput) {
+    await this.getById(id);
 
     if (data.email) {
       const existing = await prisma.akun.findUnique({ where: { email: data.email } });
-      if (existing && existing.uniqueID !== uniqueID) {
+      if (existing && existing.id !== id) {
         throw new ConflictError('Email already in use', 'EMAIL_IN_USE');
       }
     }
 
-    const updateData: Prisma.akunUpdateInput = { ...data };
+    const updateData: Prisma.AkunUpdateInput = { ...data };
     if (data.password) {
       updateData.password = await bcrypt.hash(data.password, 10);
     }
 
     const updated = await prisma.akun.update({
-      where: { uniqueID },
+      where: { id },
       data: updateData,
     });
     return this.omitPassword(updated);
   }
 
-  async delete(uniqueID: number) {
-    await this.getById(uniqueID);
-    await prisma.akun.delete({ where: { uniqueID } });
+  async delete(id: number) {
+    await this.getById(id);
+    await prisma.akun.delete({ where: { id } });
   }
 
-  private omitPassword(akun: akun) {
+  private omitPassword(akun: Akun) {
     const { password, ...akunWithoutPassword } = akun;
     return {
       ...akunWithoutPassword,

@@ -17,7 +17,7 @@ export class AkunController {
   };
 
   getProfile = async (req: AuthRequest, res: Response) => {
-    const userId = req.user!.uniqueID;
+    const userId = req.user!.id;
     const user = await this.akunService.getById(userId);
     res.json(successResponse(user));
   };
