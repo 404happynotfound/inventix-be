@@ -22,6 +22,12 @@ export class TransaksiStokController {
     res.status(201).json(successResponse(tx, 'Stock transaction recorded successfully'));
   };
 
+  createBulk = async (req: AuthRequest, res: Response) => {
+    const actorId = req.user!.id;
+    const txs = await this.service.createBulk(req.body, actorId);
+    res.status(201).json(successResponse(txs, 'Bulk stock transactions recorded successfully'));
+  };
+
   delete = async (req: AuthRequest, res: Response) => {
     const actorId = req.user!.id;
     await this.service.delete(Number(req.params.id), actorId);

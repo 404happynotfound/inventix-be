@@ -1,11 +1,12 @@
 import prisma from '../../config/prisma';
 import { NotFoundError, ConflictError } from '../../utils/errors';
-import { CreateTransaksiStokSchema } from './pembelian-transaksi.schema';
+import { CreateTransaksiStokSchema, CreateTransaksiStokBulkSchema } from './pembelian-transaksi.schema';
 import { z } from 'zod';
 import { Transaksi_Stok } from '../../../generated/prisma';
 import { RiwayatAktivitasService } from '../riwayat-aktivitas/riwayat-aktivitas.service';
 
 type CreateTransaksiStokInput = z.infer<typeof CreateTransaksiStokSchema>['body'];
+type CreateTransaksiStokBulkInput = z.infer<typeof CreateTransaksiStokBulkSchema>['body'];
 
 export class TransaksiStokService {
   async getAll() {
@@ -123,6 +124,87 @@ export class TransaksiStokService {
     });
 
     return formatted;
+  }
+
+  async createBulk(data: CreateTransaksiStokBulkInput, actorId: number) {
+    // Perform all updates atomically in a single transaction to prevent race conditions and partial stock updates
+    const transactions = await prisma.$transaction(async (tx) => {
+      const records = [];
+
+      for (const item of data.transaksi) {
+        // 1. Fetch stock item
+        const stock = await tx.stok.findUnique({
+          where: { id: item.stok_id },
+        });
+        if (!stock) {
+          throw new NotFoundError(`Stock item with ID ${item.stok_id} not found`, 'STOCK_NOT_FOUND');
+        }
+
+        // 2. If detail_po_id is provided, verify it exists
+        if (item.detail_po_id) {
+          const poDetail = await tx.detail_PO.findUnique({
+            where: { id: item.detail_po_id },
+          });
+          if (!poDetail) {
+            throw new NotFoundError(`PO Detail with ID ${item.detail_po_id} not found`, 'PO_DETAIL_NOT_FOUND');
+          }
+        }
+
+        // 3. Compute new stock quantities
+        const jumlahSebelum = stock.jumlah_saat_ini;
+        let jumlahSesudah = jumlahSebelum;
+
+        if (item.jenis === 'masuk' || item.jenis === 'lainnya') {
+          jumlahSesudah += item.jumlah;
+        } else if (item.jenis === 'keluar') {
+          jumlahSesudah -= item.jumlah;
+          if (jumlahSesudah < 0) {
+            throw new ConflictError(
+              `Insufficient stock for item "${stock.nama}" (ID ${item.stok_id}). Current: ${jumlahSebelum}, requested reduction: ${item.jumlah}`,
+              'INSUFFICIENT_STOCK'
+            );
+          }
+        }
+
+        // 4. Update the stock quantity
+        await tx.stok.update({
+          where: { id: item.stok_id },
+          data: { jumlah_saat_ini: jumlahSesudah },
+        });
+
+        // 5. Create transaction record
+        const record = await tx.transaksi_Stok.create({
+          data: {
+            akun_id: actorId,
+            stok_id: item.stok_id,
+            detail_po_id: item.detail_po_id,
+            jenis: item.jenis,
+            jumlah: item.jumlah,
+            jumlah_sebelum: jumlahSebelum,
+            jumlah_sesudah: jumlahSesudah,
+          },
+        });
+
+        records.push(record);
+      }
+
+      return records;
+    });
+
+    const formattedRecords = transactions.map((txRecord) => this.formatTransaction(txRecord));
+
+    // Log to riwayat aktivitas for each created transaction
+    for (const record of formattedRecords) {
+      await RiwayatAktivitasService.log({
+        akunId: actorId,
+        namaTabel: 'Transaksi_Stok',
+        recordId: record.id.toString(),
+        aksi: 'buat',
+        dataBaru: record,
+      });
+    }
+
+    return formattedRecords;
   }
 
   async delete(id: number, actorId: number) {

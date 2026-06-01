@@ -7,7 +7,9 @@ import {
   TransaksiStokResponseSchema, 
   TransaksiStokListResponseSchema, 
   CreateTransaksiStokSchema, 
-  TransaksiStokIdParamSchema 
+  TransaksiStokIdParamSchema,
+  CreateTransaksiStokBulkSchema,
+  TransaksiStokBulkResponseSchema
 } from './pembelian-transaksi.schema';
 import { registerRoute } from '../../utils/openapi';
 
@@ -45,6 +47,16 @@ registerRoute({
 });
 
 registerRoute({
+  method: 'post',
+  path: '/pembelian-transaksi/bulk',
+  tags: ['Pembelian Transaksi (Stock Transactions)'],
+  summary: 'Create and record new bulk stock transactions atomically',
+  protected: true,
+  request: { body: CreateTransaksiStokBulkSchema },
+  responses: { 201: { description: 'Created', schema: TransaksiStokBulkResponseSchema } },
+});
+
+registerRoute({
   method: 'delete',
   path: '/pembelian-transaksi/{id}',
   tags: ['Pembelian Transaksi (Stock Transactions)'],
@@ -73,6 +85,13 @@ router.post('/',
   validateRequest(CreateTransaksiStokSchema),
   validateResponse(TransaksiStokResponseSchema),
   controller.create
+);
+
+router.post('/bulk',
+  authenticate,
+  validateRequest(CreateTransaksiStokBulkSchema),
+  validateResponse(TransaksiStokBulkResponseSchema),
+  controller.createBulk
 );
 
 router.delete('/:id',

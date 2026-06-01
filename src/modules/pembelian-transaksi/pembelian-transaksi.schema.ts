@@ -57,3 +57,25 @@ export const TransaksiStokListResponseSchema = z.object({
   data: z.array(TransaksiStokSchema),
   message: z.string(),
 });
+
+export const CreateTransaksiStokBulkSchema = registry.register(
+  'CreateTransaksiStokBulk',
+  z.object({
+    body: z.object({
+      transaksi: z.array(
+        z.object({
+          stok_id: z.number().int().openapi({ example: 1 }),
+          jenis: JenisTransaksiEnum.openapi({ example: 'keluar' }),
+          jumlah: z.number().int().positive().openapi({ example: 5 }),
+          detail_po_id: z.number().int().optional().nullable().openapi({ example: null }),
+        })
+      ).nonempty().openapi({ description: 'Array of transactions to execute atomically' }),
+    }),
+  })
+);
+
+export const TransaksiStokBulkResponseSchema = z.object({
+  data: z.array(TransaksiStokSchema),
+  message: z.string(),
+});
+
