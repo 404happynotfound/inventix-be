@@ -1,6 +1,6 @@
 import prisma from '../../config/prisma';
 import { NotFoundError } from '../../utils/errors';
-import { JenisNotifikasi } from '../../generated/prisma';
+import { JenisNotifikasi } from '../../../generated/prisma';
 
 export class NotifikasiService {
   async getAll(page: number = 1, limit: number = 10, isRead?: boolean, jenis?: string) {
