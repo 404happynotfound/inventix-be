@@ -16,8 +16,18 @@ export class PurchaseOrderService {
         pembuat: {
           select: { id: true, nama: true },
         },
+        penyetuju: {
+          select: { id: true, nama: true },
+        },
         supplier: {
           select: { id: true, nama: true },
+        },
+        detail_po: {
+          include: {
+            stok: {
+              select: { id: true, nama: true, kode_sku: true },
+            },
+          },
         },
       },
     });
