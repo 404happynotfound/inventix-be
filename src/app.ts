@@ -38,6 +38,11 @@ app.use('/api/purchase-order', purchaseOrderRoutes);
 app.use('/api/pembelian-transaksi', pembelianTransaksiRoutes);
 app.use('/api/riwayat-aktivitas', riwayatAktivitasRoutes);
 
+// Route to serve raw OpenAPI JSON spec
+app.get('/openapi.json', (req, res) => {
+  res.json(generateOpenApiDocument());
+});
+
 // OpenAPI Documentation Route
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(generateOpenApiDocument()));
 
