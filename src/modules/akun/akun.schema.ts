@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { registry } from '../../config/openapi';
+import { Peran } from '../../../generated/prisma';
 
-export const PeranEnum = z.enum(['ADMIN', 'SUPPLIER', 'PEMBELI']);
+export const PeranEnum = z.nativeEnum(Peran);
 
 export const AkunSchema = registry.register(
   'Akun',
