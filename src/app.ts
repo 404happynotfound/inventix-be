@@ -29,8 +29,14 @@ const app = express();
 // Middlewares
 app.use(httpLogger);
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production'
+    ? process.env.FRONTEND_URL ?? 'http://localhost:3001'
+    : 'http://localhost:3001',
+  credentials: true,
+}));
 app.use(express.json());
+
 
 // Routes
 app.use('/api/auth', authRoutes);
