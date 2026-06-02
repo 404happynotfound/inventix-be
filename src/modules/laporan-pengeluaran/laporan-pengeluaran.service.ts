@@ -37,7 +37,7 @@ export class LaporanPengeluaranService {
     const params: any[] = [];
 
     if (search) {
-      conditions.push(`(st.nama ILIKE $${conditions.length + 1} OR st.kode_sku ILIKE $${conditions.length + 1} OR s.nama ILIKE $${conditions.length + 1})`);
+      conditions.push(`(st.nama ILIKE $${params.length + 1} OR st.kode_sku ILIKE $${params.length + 1} OR s.nama ILIKE $${params.length + 1})`);
       params.push(`%${search}%`);
     }
 
@@ -73,7 +73,7 @@ export class LaporanPengeluaranService {
       prisma.$queryRawUnsafe(dataQuery, ...params, limit, skip),
     ]);
 
-    const total = (countResult as any[])[0]?.total || 0;
+    const total = Number((countResult as any[])[0]?.total || 0);
 
     return {
       data: (data as any[]).map(d => this.formatPengeluaran(d)),

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { LaporanPengeluaranController } from './laporan-pengeluaran.controller';
 import { authenticate } from '../../middlewares/authMiddleware';
+import { validateRequest } from '../../middlewares/validate';
+import { validateResponse } from '../../middlewares/validateResponse';
 import {
   PengeluaranListResponseSchema,
   PengeluaranSummarySchema,
@@ -43,8 +45,21 @@ registerRoute({
 });
 
 // ROUTES
-router.get('/summary', authenticate, controller.getSummary);
-router.get('/export', authenticate, controller.exportCSV);
-router.get('/', authenticate, controller.getList);
+router.get('/summary',
+  authenticate,
+  validateResponse(PengeluaranSummarySchema),
+  controller.getSummary
+);
+router.get('/export',
+  authenticate,
+  validateRequest(PengeluaranExportQuerySchema),
+  controller.exportCSV
+);
+router.get('/',
+  authenticate,
+  validateRequest(PengeluaranQuerySchema),
+  validateResponse(PengeluaranListResponseSchema),
+  controller.getList
+);
 
 export default router;
