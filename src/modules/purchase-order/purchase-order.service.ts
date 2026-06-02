@@ -73,7 +73,10 @@ export class PurchaseOrderService {
         calculatedTotal += item.jumlah_dipesan * item.harga_satuan;
       }
 
-      // 3. Create PO header
+      // 3. Determine status based on amount threshold
+      const poStatus = calculatedTotal >= 500000 ? 'MENUNGGU_PERSETUJUAN' : 'DISETUJUI';
+
+      // 4. Create PO header
       const po = await tx.purchase_Order.create({
         data: {
           nomor_po: nomorPo,
@@ -81,7 +84,7 @@ export class PurchaseOrderService {
           supplier_id: data.supplier_id,
           total_nilai: BigInt(calculatedTotal),
           catatan: data.catatan,
-          status: 'DRAFT',
+          status: poStatus,
           status_supplier: 'MENUNGGU_KONFIRMASI',
         },
       });
@@ -258,6 +261,172 @@ export class PurchaseOrderService {
       aksi: 'hapus',
       dataLama: oldPO,
     });
+  }
+
+  async ownerApprove(id: number, ownerId: number) {
+    const po = await this.getById(id);
+
+    if (po.status !== 'MENUNGGU_PERSETUJUAN') {
+      throw new ConflictError('PO is not awaiting owner approval', 'PO_NOT_PENDING');
+    }
+
+    const updated = await prisma.purchase_Order.update({
+      where: { id },
+      data: {
+        status: 'DISETUJUI',
+        disetujui_oleh: ownerId,
+        tanggal_disetujui: new Date(),
+      },
+      include: { detail_po: true },
+    });
+
+    const formatted = this.formatPO(updated);
+    await RiwayatAktivitasService.log({
+      akunId: ownerId,
+      namaTabel: 'Purchase_Order',
+      recordId: id.toString(),
+      aksi: 'edit',
+      dataLama: po,
+      dataBaru: formatted,
+    });
+
+    return formatted;
+  }
+
+  async ownerReject(id: number, ownerId: number) {
+    const po = await this.getById(id);
+
+    if (po.status !== 'MENUNGGU_PERSETUJUAN') {
+      throw new ConflictError('PO is not awaiting owner approval', 'PO_NOT_PENDING');
+    }
+
+    const updated = await prisma.purchase_Order.update({
+      where: { id },
+      data: {
+        status: 'DITOLAK',
+        disetujui_oleh: ownerId,
+        tanggal_disetujui: new Date(),
+      },
+      include: { detail_po: true },
+    });
+
+    const formatted = this.formatPO(updated);
+    await RiwayatAktivitasService.log({
+      akunId: ownerId,
+      namaTabel: 'Purchase_Order',
+      recordId: id.toString(),
+      aksi: 'edit',
+      dataLama: po,
+      dataBaru: formatted,
+    });
+
+    return formatted;
+  }
+
+  async supplierConfirm(id: number, actorId: number) {
+    const po = await this.getById(id);
+
+    if (po.status !== 'DISETUJUI') {
+      throw new ConflictError('PO must be approved by owner before supplier can confirm', 'PO_NOT_APPROVED');
+    }
+    if (po.status_supplier === 'DIKONFIRMASI') {
+      throw new ConflictError('PO already confirmed by supplier', 'PO_ALREADY_CONFIRMED');
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      // 1. Update PO status
+      const updatedPO = await tx.purchase_Order.update({
+        where: { id },
+        data: {
+          status_supplier: 'DIKONFIRMASI',
+          status: 'SELESAI',
+          tanggal_konfirmasi_supplier: new Date(),
+        },
+        include: { detail_po: true },
+      });
+
+      // 2. Increment stock for each detail item
+      for (const item of updatedPO.detail_po) {
+        const jumlahTerima = item.jumlah_diterima > 0 ? item.jumlah_diterima : item.jumlah_dipesan;
+
+        const stock = await tx.stok.findUnique({ where: { id: item.stok_id } });
+        if (!stock) continue;
+
+        const stockBefore = stock.jumlah_saat_ini;
+        const stockAfter = stockBefore + jumlahTerima;
+
+        await tx.stok.update({
+          where: { id: item.stok_id },
+          data: { jumlah_saat_ini: stockAfter },
+        });
+
+        if (item.jumlah_diterima === 0) {
+          await tx.detail_PO.update({
+            where: { id: item.id },
+            data: { jumlah_diterima: jumlahTerima },
+          });
+        }
+
+        await tx.transaksi_Stok.create({
+          data: {
+            akun_id: actorId,
+            stok_id: item.stok_id,
+            detail_po_id: item.id,
+            jenis: 'masuk',
+            jumlah: jumlahTerima,
+            jumlah_sebelum: stockBefore,
+            jumlah_sesudah: stockAfter,
+          },
+        });
+      }
+
+      return updatedPO;
+    });
+
+    const formatted = this.formatPO(updated);
+    await RiwayatAktivitasService.log({
+      akunId: actorId,
+      namaTabel: 'Purchase_Order',
+      recordId: id.toString(),
+      aksi: 'edit',
+      dataLama: po,
+      dataBaru: formatted,
+    });
+
+    return formatted;
+  }
+
+  async supplierReject(id: number, actorId: number) {
+    const po = await this.getById(id);
+
+    if (po.status !== 'DISETUJUI') {
+      throw new ConflictError('PO must be approved before supplier can reject', 'PO_NOT_APPROVED');
+    }
+    if (po.status_supplier !== 'MENUNGGU_KONFIRMASI') {
+      throw new ConflictError('PO supplier status is not pending', 'PO_SUPPLIER_NOT_PENDING');
+    }
+
+    const updated = await prisma.purchase_Order.update({
+      where: { id },
+      data: {
+        status_supplier: 'DITOLAK',
+        status: 'DITOLAK',
+        tanggal_konfirmasi_supplier: new Date(),
+      },
+      include: { detail_po: true },
+    });
+
+    const formatted = this.formatPO(updated);
+    await RiwayatAktivitasService.log({
+      akunId: actorId,
+      namaTabel: 'Purchase_Order',
+      recordId: id.toString(),
+      aksi: 'edit',
+      dataLama: po,
+      dataBaru: formatted,
+    });
+
+    return formatted;
   }
 
   private formatPO(po: any) {

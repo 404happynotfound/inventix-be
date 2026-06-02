@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { NotifikasiController } from './notifikasi.controller';
 import { authenticate } from '../../middlewares/authMiddleware';
-import { validateResponse } from '../../middlewares/validateResponse';
 import {
   NotifikasiListResponseSchema,
   NotifikasiResponseSchema,
