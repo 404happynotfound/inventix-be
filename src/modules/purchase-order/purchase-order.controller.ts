@@ -7,12 +7,14 @@ export class PurchaseOrderController {
   private service = new PurchaseOrderService();
 
   getAll = async (req: AuthRequest, res: Response) => {
-    const pos = await this.service.getAll();
+    const actorId = req.user!.id;
+    const pos = await this.service.getAll(actorId);
     res.json(successResponse(pos));
   };
 
   getById = async (req: AuthRequest, res: Response) => {
-    const po = await this.service.getById(Number(req.params.id));
+    const actorId = req.user!.id;
+    const po = await this.service.getById(Number(req.params.id), actorId);
     res.json(successResponse(po));
   };
 
