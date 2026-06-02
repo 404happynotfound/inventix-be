@@ -42,10 +42,10 @@ app.use('/api/klasifikasi-stok', klasifikasiStokRoutes);
 app.use('/api/purchase-order', purchaseOrderRoutes);
 app.use('/api/pembelian-transaksi', pembelianTransaksiRoutes);
 app.use('/api/riwayat-aktivitas', riwayatAktivitasRoutes);
-app.use('/api/v1/notifikasi', notifikasiRoutes);
-app.use('/api/v1/laporan', laporanPengeluaranRoutes);
-app.use('/api/v1/dashboard', dashboardRoutes);
-app.use('/api/v1/waste', wasteRoutes);
+app.use('/api/notifikasi', notifikasiRoutes);
+app.use('/api/laporan/pengeluaran', laporanPengeluaranRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/waste', wasteRoutes);
 
 // Route to serve raw OpenAPI JSON spec
 app.get('/openapi.json', (req, res) => {
