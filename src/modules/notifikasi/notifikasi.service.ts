@@ -43,7 +43,7 @@ export class NotifikasiService {
   async markAsRead(id: number) {
     const notification = await prisma.notifikasi.findUnique({ where: { id } });
     if (!notification) {
-      throw new NotFoundError('Notification not found', 'NOTIFIKASI_NOT_FOUND');
+      throw new NotFoundError('Notifikasi tidak ditemukan', 'NOTIFIKASI_NOT_FOUND');
     }
 
     const updated = await prisma.notifikasi.update({

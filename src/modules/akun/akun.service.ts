@@ -17,7 +17,7 @@ export class AkunService {
   async getById(id: number) {
     const akun = await prisma.akun.findUnique({ where: { id } });
     if (!akun) {
-      throw new NotFoundError('Account not found', 'ACCOUNT_NOT_FOUND');
+      throw new NotFoundError('Akun tidak ditemukan', 'ACCOUNT_NOT_FOUND');
     }
     return this.omitPassword(akun);
   }
@@ -25,7 +25,7 @@ export class AkunService {
   async create(data: CreateAkunInput) {
     const existing = await prisma.akun.findUnique({ where: { email: data.email } });
     if (existing) {
-      throw new ConflictError('Email already in use', 'EMAIL_IN_USE');
+      throw new ConflictError('Email sudah digunakan', 'EMAIL_IN_USE');
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -45,7 +45,7 @@ export class AkunService {
     if (data.email) {
       const existing = await prisma.akun.findUnique({ where: { email: data.email } });
       if (existing && existing.id !== id) {
-        throw new ConflictError('Email already in use', 'EMAIL_IN_USE');
+        throw new ConflictError('Email sudah digunakan', 'EMAIL_IN_USE');
       }
     }
 

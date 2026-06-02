@@ -49,7 +49,7 @@ export class StokService {
       },
     });
     if (!stock) {
-      throw new NotFoundError('Stock item not found', 'STOCK_NOT_FOUND');
+      throw new NotFoundError('Barang stok tidak ditemukan', 'STOCK_NOT_FOUND');
     }
     return this.formatStock(stock);
   }
@@ -58,19 +58,19 @@ export class StokService {
     // 1. SKU uniqueness check
     const skuExists = await prisma.stok.findUnique({ where: { kode_sku: data.kode_sku } });
     if (skuExists) {
-      throw new ConflictError('SKU code already exists', 'SKU_ALREADY_EXISTS');
+      throw new ConflictError('Kode SKU sudah ada', 'SKU_ALREADY_EXISTS');
     }
 
     // 2. Classification exists check
     const classification = await prisma.klasifikasi_Stok.findUnique({ where: { id: data.klasifikasi_id } });
     if (!classification) {
-      throw new NotFoundError('Stock classification not found', 'CLASSIFICATION_NOT_FOUND');
+      throw new NotFoundError('Klasifikasi stok tidak ditemukan', 'CLASSIFICATION_NOT_FOUND');
     }
 
     // 3. Supplier exists check
     const supplier = await prisma.supplier.findUnique({ where: { id: data.supplier_id } });
     if (!supplier) {
-      throw new NotFoundError('Supplier not found', 'SUPPLIER_NOT_FOUND');
+      throw new NotFoundError('Pemasok tidak ditemukan', 'SUPPLIER_NOT_FOUND');
     }
 
     const { tanggal_expired, tanggal_kedaluwarsa, ...prismaData } = data;
@@ -102,7 +102,7 @@ export class StokService {
     if (data.kode_sku && data.kode_sku !== oldStock.kode_sku) {
       const skuExists = await prisma.stok.findUnique({ where: { kode_sku: data.kode_sku } });
       if (skuExists) {
-        throw new ConflictError('SKU code already exists', 'SKU_ALREADY_EXISTS');
+        throw new ConflictError('Kode SKU sudah ada', 'SKU_ALREADY_EXISTS');
       }
     }
 
@@ -110,7 +110,7 @@ export class StokService {
     if (data.klasifikasi_id && data.klasifikasi_id !== oldStock.klasifikasi_id) {
       const classification = await prisma.klasifikasi_Stok.findUnique({ where: { id: data.klasifikasi_id } });
       if (!classification) {
-        throw new NotFoundError('Stock classification not found', 'CLASSIFICATION_NOT_FOUND');
+        throw new NotFoundError('Klasifikasi stok tidak ditemukan', 'CLASSIFICATION_NOT_FOUND');
       }
     }
 
@@ -118,7 +118,7 @@ export class StokService {
     if (data.supplier_id && data.supplier_id !== oldStock.supplier_id) {
       const supplier = await prisma.supplier.findUnique({ where: { id: data.supplier_id } });
       if (!supplier) {
-        throw new NotFoundError('Supplier not found', 'SUPPLIER_NOT_FOUND');
+        throw new NotFoundError('Pemasok tidak ditemukan', 'SUPPLIER_NOT_FOUND');
       }
     }
 
@@ -154,12 +154,12 @@ export class StokService {
     // Check usage in transactions or purchase order details
     const txCount = await prisma.transaksi_Stok.count({ where: { stok_id: id } });
     if (txCount > 0) {
-      throw new ConflictError('Cannot delete stock item because it has associated transactions', 'STOCK_HAS_TRANSACTIONS');
+      throw new ConflictError('Tidak dapat menghapus barang stok karena memiliki transaksi terkait', 'STOCK_HAS_TRANSACTIONS');
     }
 
     const poCount = await prisma.detail_PO.count({ where: { stok_id: id } });
     if (poCount > 0) {
-      throw new ConflictError('Cannot delete stock item because it is referenced in purchase orders', 'STOCK_HAS_PO_DETAILS');
+      throw new ConflictError('Tidak dapat menghapus barang stok karena dirujuk dalam purchase order', 'STOCK_HAS_PO_DETAILS');
     }
 
     await prisma.stok.delete({ where: { id } });

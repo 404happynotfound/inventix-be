@@ -53,7 +53,7 @@ export class TransaksiStokService {
       },
     });
     if (!tx) {
-      throw new NotFoundError('Stock transaction not found', 'TRANSACTION_NOT_FOUND');
+      throw new NotFoundError('Transaksi stok tidak ditemukan', 'TRANSACTION_NOT_FOUND');
     }
     return this.formatTransaction(tx);
   }
@@ -66,7 +66,7 @@ export class TransaksiStokService {
         where: { id: data.stok_id },
       });
       if (!stock) {
-        throw new NotFoundError('Stock item not found', 'STOCK_NOT_FOUND');
+        throw new NotFoundError('Barang stok tidak ditemukan', 'STOCK_NOT_FOUND');
       }
 
       // 2. If detail_po_id is provided, verify it exists
@@ -75,7 +75,7 @@ export class TransaksiStokService {
           where: { id: data.detail_po_id },
         });
         if (!poDetail) {
-          throw new NotFoundError('PO Detail not found', 'PO_DETAIL_NOT_FOUND');
+          throw new NotFoundError('Detail PO tidak ditemukan', 'PO_DETAIL_NOT_FOUND');
         }
       }
 
@@ -88,7 +88,7 @@ export class TransaksiStokService {
       } else if (data.jenis === 'keluar') {
         jumlahSesudah -= data.jumlah;
         if (jumlahSesudah < 0) {
-          throw new ConflictError(`Insufficient stock. Current: ${jumlahSebelum}, requested reduction: ${data.jumlah}`, 'INSUFFICIENT_STOCK');
+          throw new ConflictError(`Stok tidak mencukupi. Saat ini: ${jumlahSebelum}, pengurangan yang diminta: ${data.jumlah}`, 'INSUFFICIENT_STOCK');
         }
       }
 
@@ -137,7 +137,7 @@ export class TransaksiStokService {
           where: { id: item.stok_id },
         });
         if (!stock) {
-          throw new NotFoundError(`Stock item with ID ${item.stok_id} not found`, 'STOCK_NOT_FOUND');
+           throw new NotFoundError(`Barang stok dengan ID ${item.stok_id} tidak ditemukan`, 'STOCK_NOT_FOUND');
         }
 
         // 2. If detail_po_id is provided, verify it exists
@@ -146,7 +146,7 @@ export class TransaksiStokService {
             where: { id: item.detail_po_id },
           });
           if (!poDetail) {
-            throw new NotFoundError(`PO Detail with ID ${item.detail_po_id} not found`, 'PO_DETAIL_NOT_FOUND');
+             throw new NotFoundError(`Detail PO dengan ID ${item.detail_po_id} tidak ditemukan`, 'PO_DETAIL_NOT_FOUND');
           }
         }
 
@@ -160,7 +160,7 @@ export class TransaksiStokService {
           jumlahSesudah -= item.jumlah;
           if (jumlahSesudah < 0) {
             throw new ConflictError(
-              `Insufficient stock for item "${stock.nama}" (ID ${item.stok_id}). Current: ${jumlahSebelum}, requested reduction: ${item.jumlah}`,
+              `Stok tidak mencukupi untuk barang "${stock.nama}" (ID ${item.stok_id}). Saat ini: ${jumlahSebelum}, pengurangan yang diminta: ${item.jumlah}`,
               'INSUFFICIENT_STOCK'
             );
           }
@@ -216,7 +216,7 @@ export class TransaksiStokService {
         where: { id: oldTx.stok_id },
       });
       if (!stock) {
-        throw new NotFoundError('Stock item not found', 'STOCK_NOT_FOUND');
+        throw new NotFoundError('Barang stok tidak ditemukan', 'STOCK_NOT_FOUND');
       }
 
       // Reverse calculations
@@ -224,7 +224,7 @@ export class TransaksiStokService {
       if (oldTx.jenis === 'masuk' || oldTx.jenis === 'lainnya') {
         reversedStock -= oldTx.jumlah;
         if (reversedStock < 0) {
-          throw new ConflictError('Cannot delete transaction: reversing it would result in negative stock quantity', 'REVERSAL_NEGATES_STOCK');
+          throw new ConflictError('Tidak dapat menghapus transaksi: membatalkannya akan menghasilkan jumlah stok negatif', 'REVERSAL_NEGATES_STOCK');
         }
       } else if (oldTx.jenis === 'keluar') {
         reversedStock += oldTx.jumlah;

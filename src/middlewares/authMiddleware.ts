@@ -11,7 +11,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({
-      message: 'Unauthorized',
+      message: 'Tidak terotorisasi',
       error: { code: 'UNAUTHORIZED_ACCESS', details: [] },
     });
   }
@@ -24,7 +24,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     next();
   } catch (error) {
     return res.status(401).json({
-      message: 'Invalid or expired token',
+      message: 'Token tidak valid atau kedaluwarsa',
       error: { code: 'INVALID_TOKEN', details: [] },
     });
   }

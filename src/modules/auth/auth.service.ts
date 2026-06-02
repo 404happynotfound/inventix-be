@@ -13,7 +13,7 @@ export class AuthService {
   async register(data: RegisterInput) {
     const existingUser = await prisma.akun.findUnique({ where: { email: data.email } });
     if (existingUser) {
-      throw new ConflictError('Email already in use', 'EMAIL_IN_USE');
+      throw new ConflictError('Email sudah digunakan', 'EMAIL_IN_USE');
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -33,12 +33,12 @@ export class AuthService {
   async login(data: LoginInput) {
     const user = await prisma.akun.findUnique({ where: { email: data.email } });
     if (!user) {
-      throw new UnauthorizedError('Invalid credentials', 'INVALID_CREDENTIALS');
+      throw new UnauthorizedError('Kredensial tidak valid', 'INVALID_CREDENTIALS');
     }
 
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedError('Invalid credentials', 'INVALID_CREDENTIALS');
+      throw new UnauthorizedError('Kredensial tidak valid', 'INVALID_CREDENTIALS');
     }
 
     return this.generateAuthResponse(user);

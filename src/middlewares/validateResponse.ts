@@ -21,7 +21,7 @@ export const validateResponse = (schema: z.ZodTypeAny) => {
               issues: zodError.issues,
             });
             return originalSend.call(this, {
-              message: 'Internal Server Error - Response Contract Violation',
+              message: 'Kesalahan Server Internal - Pelanggaran Kontrak Respons',
               error: {
                 code: 'RESPONSE_VALIDATION_ERROR',
                 details: zodError.issues.map((e: any) => ({

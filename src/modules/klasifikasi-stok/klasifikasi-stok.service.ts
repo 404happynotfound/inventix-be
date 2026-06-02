@@ -19,7 +19,7 @@ export class KlasifikasiStokService {
   async getById(id: number) {
     const record = await prisma.klasifikasi_Stok.findUnique({ where: { id } });
     if (!record) {
-      throw new NotFoundError('Stock classification not found', 'STOCK_CLASSIFICATION_NOT_FOUND');
+      throw new NotFoundError('Klasifikasi stok tidak ditemukan', 'STOCK_CLASSIFICATION_NOT_FOUND');
     }
     return this.formatRecord(record);
   }
@@ -29,7 +29,7 @@ export class KlasifikasiStokService {
       where: { jenis: { equals: data.jenis, mode: 'insensitive' } },
     });
     if (existing) {
-      throw new ConflictError('Stock classification type already exists', 'CLASSIFICATION_EXISTS');
+      throw new ConflictError('Tipe klasifikasi stok sudah ada', 'CLASSIFICATION_EXISTS');
     }
 
     const record = await prisma.klasifikasi_Stok.create({
@@ -59,7 +59,7 @@ export class KlasifikasiStokService {
         },
       });
       if (existing) {
-        throw new ConflictError('Stock classification type already exists', 'CLASSIFICATION_EXISTS');
+        throw new ConflictError('Tipe klasifikasi stok sudah ada', 'CLASSIFICATION_EXISTS');
       }
     }
 
@@ -87,7 +87,7 @@ export class KlasifikasiStokService {
     // Check if classification is in use by stocks
     const stockCount = await prisma.stok.count({ where: { klasifikasi_id: id } });
     if (stockCount > 0) {
-      throw new ConflictError('Cannot delete classification because it is currently linked to existing stocks', 'CLASSIFICATION_IN_USE');
+      throw new ConflictError('Tidak dapat menghapus klasifikasi karena saat ini terhubung dengan stok yang ada', 'CLASSIFICATION_IN_USE');
     }
 
     await prisma.klasifikasi_Stok.delete({ where: { id } });

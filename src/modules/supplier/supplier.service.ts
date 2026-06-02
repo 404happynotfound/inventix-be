@@ -39,7 +39,7 @@ export class SupplierService {
       },
     });
     if (!supplier) {
-      throw new NotFoundError('Supplier not found', 'SUPPLIER_NOT_FOUND');
+      throw new NotFoundError('Pemasok tidak ditemukan', 'SUPPLIER_NOT_FOUND');
     }
     return this.formatSupplier(supplier);
   }
@@ -48,13 +48,13 @@ export class SupplierService {
     // 1. Verify Akun exists
     const user = await prisma.akun.findUnique({ where: { id: data.user_id } });
     if (!user) {
-      throw new NotFoundError('Associated user account not found', 'USER_NOT_FOUND');
+      throw new NotFoundError('Akun pengguna terkait tidak ditemukan', 'USER_NOT_FOUND');
     }
 
     // 2. Verify user_id is not already linked to another supplier
     const existingLink = await prisma.supplier.findUnique({ where: { user_id: data.user_id } });
     if (existingLink) {
-      throw new ConflictError('User is already assigned to another supplier', 'USER_ALREADY_ASSIGNED');
+      throw new ConflictError('Pengguna sudah ditugaskan ke pemasok lain', 'USER_ALREADY_ASSIGNED');
     }
 
     const supplier = await prisma.supplier.create({
@@ -80,13 +80,13 @@ export class SupplierService {
       // 1. Verify Akun exists
       const user = await prisma.akun.findUnique({ where: { id: data.user_id } });
       if (!user) {
-        throw new NotFoundError('Associated user account not found', 'USER_NOT_FOUND');
+        throw new NotFoundError('Akun pengguna terkait tidak ditemukan', 'USER_NOT_FOUND');
       }
 
       // 2. Verify user_id is not already linked to another supplier
       const existingLink = await prisma.supplier.findUnique({ where: { user_id: data.user_id } });
       if (existingLink) {
-        throw new ConflictError('User is already assigned to another supplier', 'USER_ALREADY_ASSIGNED');
+        throw new ConflictError('Pengguna sudah ditugaskan ke pemasok lain', 'USER_ALREADY_ASSIGNED');
       }
     }
 
@@ -114,12 +114,12 @@ export class SupplierService {
     // Check if supplier is linked to existing stock or purchase orders
     const stockCount = await prisma.stok.count({ where: { supplier_id: id } });
     if (stockCount > 0) {
-      throw new ConflictError('Cannot delete supplier because it is linked to existing stocks', 'SUPPLIER_HAS_STOCKS');
+      throw new ConflictError('Tidak dapat menghapus pemasok karena terhubung dengan stok yang ada', 'SUPPLIER_HAS_STOCKS');
     }
 
     const poCount = await prisma.purchase_Order.count({ where: { supplier_id: id } });
     if (poCount > 0) {
-      throw new ConflictError('Cannot delete supplier because it is linked to existing purchase orders', 'SUPPLIER_HAS_POS');
+      throw new ConflictError('Tidak dapat menghapus pemasok karena terhubung dengan purchase order yang ada', 'SUPPLIER_HAS_POS');
     }
 
     await prisma.supplier.delete({ where: { id } });

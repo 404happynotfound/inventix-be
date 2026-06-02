@@ -12,7 +12,7 @@ export class PurchaseOrderService {
   async getAll(actorId: number) {
     const actor = await prisma.akun.findUnique({ where: { id: actorId } });
     if (!actor) {
-      throw new NotFoundError('User not found', 'USER_NOT_FOUND');
+      throw new NotFoundError('Pengguna tidak ditemukan', 'USER_NOT_FOUND');
     }
 
     let whereClause: any = {};
@@ -85,7 +85,7 @@ export class PurchaseOrderService {
       },
     });
     if (!po) {
-      throw new NotFoundError('Purchase Order not found', 'PO_NOT_FOUND');
+      throw new NotFoundError('Purchase Order tidak ditemukan', 'PO_NOT_FOUND');
     }
 
     if (actorId !== undefined) {
@@ -93,14 +93,14 @@ export class PurchaseOrderService {
       if (actor && actor.peran === 'SUPPLIER') {
         const supplier = await prisma.supplier.findUnique({ where: { user_id: actorId } });
         if (!supplier || po.supplier_id !== supplier.id) {
-          throw new ForbiddenError('You do not have permission to view this purchase order', 'FORBIDDEN_PO_ACCESS');
+          throw new ForbiddenError('Anda tidak memiliki izin untuk melihat purchase order ini', 'FORBIDDEN_PO_ACCESS');
         }
         if (
           po.status === 'MENUNGGU_PERSETUJUAN' ||
           po.status === 'DRAFT' ||
           (po.status === 'DITOLAK' && po.status_supplier === 'MENUNGGU_KONFIRMASI')
         ) {
-          throw new ForbiddenError('You do not have permission to view this purchase order', 'FORBIDDEN_PO_ACCESS');
+          throw new ForbiddenError('Anda tidak memiliki izin untuk melihat purchase order ini', 'FORBIDDEN_PO_ACCESS');
         }
       }
     }
@@ -116,7 +116,7 @@ export class PurchaseOrderService {
       // 1. Verify supplier
       const supplier = await tx.supplier.findUnique({ where: { id: data.supplier_id } });
       if (!supplier) {
-        throw new NotFoundError('Supplier not found', 'SUPPLIER_NOT_FOUND');
+        throw new NotFoundError('Pemasok tidak ditemukan', 'SUPPLIER_NOT_FOUND');
       }
 
       // 2. Verify all stock items and calculate total value
@@ -124,10 +124,10 @@ export class PurchaseOrderService {
       for (const item of data.detail_po) {
         const stock = await tx.stok.findUnique({ where: { id: item.stok_id } });
         if (!stock) {
-          throw new NotFoundError(`Stock item with ID ${item.stok_id} not found`, 'STOCK_NOT_FOUND');
+          throw new NotFoundError(`Barang stok dengan ID ${item.stok_id} tidak ditemukan`, 'STOCK_NOT_FOUND');
         }
         if (stock.supplier_id !== data.supplier_id) {
-          throw new ConflictError(`Stock item "${stock.nama}" does not belong to the selected supplier`, 'SUPPLIER_MISMATCH');
+          throw new ConflictError(`Barang stok "${stock.nama}" bukan milik pemasok yang dipilih`, 'SUPPLIER_MISMATCH');
         }
         calculatedTotal += item.jumlah_dipesan * item.harga_satuan;
       }
@@ -186,7 +186,7 @@ export class PurchaseOrderService {
     const oldPO = await this.getById(id);
 
     if (oldPO.status === 'SELESAI' || oldPO.status === 'DIBATALKAN') {
-      throw new ConflictError(`Cannot update Purchase Order because it is already in ${oldPO.status} state`, 'PO_IMMUTABLE');
+      throw new ConflictError(`Tidak dapat memperbarui Purchase Order karena sudah berada dalam status ${oldPO.status}`, 'PO_IMMUTABLE');
     }
 
     const updatedPO = await prisma.$transaction(async (tx) => {
@@ -200,7 +200,7 @@ export class PurchaseOrderService {
           // Fetch current stock
           const stock = await tx.stok.findUnique({ where: { id: item.stok_id } });
           if (!stock) {
-            throw new NotFoundError(`Stock item ${item.stok_id} not found during stock reception`, 'STOCK_NOT_FOUND');
+            throw new NotFoundError(`Barang stok ${item.stok_id} tidak ditemukan saat penerimaan stok`, 'STOCK_NOT_FOUND');
           }
 
           const stockBefore = stock.jumlah_saat_ini;
@@ -245,10 +245,10 @@ export class PurchaseOrderService {
         for (const item of data.detail_po) {
           const stock = await tx.stok.findUnique({ where: { id: item.stok_id } });
           if (!stock) {
-            throw new NotFoundError(`Stock item with ID ${item.stok_id} not found`, 'STOCK_NOT_FOUND');
+            throw new NotFoundError(`Barang stok dengan ID ${item.stok_id} tidak ditemukan`, 'STOCK_NOT_FOUND');
           }
           if (stock.supplier_id !== currentSupplierId) {
-            throw new ConflictError(`Stock item "${stock.nama}" does not belong to the selected supplier`, 'SUPPLIER_MISMATCH');
+            throw new ConflictError(`Barang stok "${stock.nama}" bukan milik pemasok yang dipilih`, 'SUPPLIER_MISMATCH');
           }
           calculatedTotal += item.jumlah_dipesan * item.harga_satuan;
 
@@ -306,7 +306,7 @@ export class PurchaseOrderService {
     const oldPO = await this.getById(id);
 
     if (oldPO.status === 'SELESAI') {
-      throw new ConflictError('Cannot delete a completed Purchase Order', 'PO_COMPLETED_INDESTRUCTIBLE');
+      throw new ConflictError('Tidak dapat menghapus Purchase Order yang sudah selesai', 'PO_COMPLETED_INDESTRUCTIBLE');
     }
 
     await prisma.$transaction(async (tx) => {
@@ -329,13 +329,13 @@ export class PurchaseOrderService {
   async ownerApprove(id: number, ownerId: number) {
     const actor = await prisma.akun.findUnique({ where: { id: ownerId } });
     if (!actor || actor.peran !== 'OWNER') {
-      throw new ForbiddenError('Only an OWNER can approve purchase orders', 'FORBIDDEN_PO_APPROVAL');
+      throw new ForbiddenError('Hanya pemilik (OWNER) yang dapat menyetujui purchase order', 'FORBIDDEN_PO_APPROVAL');
     }
 
     const po = await this.getById(id);
 
     if (po.status !== 'MENUNGGU_PERSETUJUAN') {
-      throw new ConflictError('PO is not awaiting owner approval', 'PO_NOT_PENDING');
+      throw new ConflictError('PO tidak sedang menunggu persetujuan pemilik', 'PO_NOT_PENDING');
     }
 
     const updated = await prisma.purchase_Order.update({
@@ -364,13 +364,13 @@ export class PurchaseOrderService {
   async ownerReject(id: number, ownerId: number) {
     const actor = await prisma.akun.findUnique({ where: { id: ownerId } });
     if (!actor || actor.peran !== 'OWNER') {
-      throw new ForbiddenError('Only an OWNER can reject purchase orders', 'FORBIDDEN_PO_APPROVAL');
+      throw new ForbiddenError('Hanya pemilik (OWNER) yang dapat menolak purchase order', 'FORBIDDEN_PO_APPROVAL');
     }
 
     const po = await this.getById(id);
 
     if (po.status !== 'MENUNGGU_PERSETUJUAN') {
-      throw new ConflictError('PO is not awaiting owner approval', 'PO_NOT_PENDING');
+      throw new ConflictError('PO tidak sedang menunggu persetujuan pemilik', 'PO_NOT_PENDING');
     }
 
     const updated = await prisma.purchase_Order.update({
@@ -401,14 +401,14 @@ export class PurchaseOrderService {
 
     const supplier = await prisma.supplier.findUnique({ where: { user_id: actorId } });
     if (!supplier || supplier.id !== po.supplier_id) {
-      throw new ForbiddenError('Only the assigned supplier can confirm this purchase order', 'FORBIDDEN_PO_SUPPLIER_ACTION');
+      throw new ForbiddenError('Hanya pemasok yang ditugaskan yang dapat mengonfirmasi purchase order ini', 'FORBIDDEN_PO_SUPPLIER_ACTION');
     }
 
     if (po.status !== 'DISETUJUI') {
-      throw new ConflictError('PO must be approved by owner before supplier can confirm', 'PO_NOT_APPROVED');
+      throw new ConflictError('PO harus disetujui oleh pemilik sebelum pemasok dapat mengonfirmasi', 'PO_NOT_APPROVED');
     }
     if (po.status_supplier === 'DIKONFIRMASI') {
-      throw new ConflictError('PO already confirmed by supplier', 'PO_ALREADY_CONFIRMED');
+      throw new ConflictError('PO sudah dikonfirmasi oleh pemasok', 'PO_ALREADY_CONFIRMED');
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -479,14 +479,14 @@ export class PurchaseOrderService {
 
     const supplier = await prisma.supplier.findUnique({ where: { user_id: actorId } });
     if (!supplier || supplier.id !== po.supplier_id) {
-      throw new ForbiddenError('Only the assigned supplier can reject this purchase order', 'FORBIDDEN_PO_SUPPLIER_ACTION');
+      throw new ForbiddenError('Hanya pemasok yang ditugaskan yang dapat menolak purchase order ini', 'FORBIDDEN_PO_SUPPLIER_ACTION');
     }
 
     if (po.status !== 'DISETUJUI') {
-      throw new ConflictError('PO must be approved before supplier can reject', 'PO_NOT_APPROVED');
+      throw new ConflictError('PO harus disetujui sebelum pemasok dapat menolak', 'PO_NOT_APPROVED');
     }
     if (po.status_supplier !== 'MENUNGGU_KONFIRMASI') {
-      throw new ConflictError('PO supplier status is not pending', 'PO_SUPPLIER_NOT_PENDING');
+      throw new ConflictError('Status pemasok PO tidak tertunda', 'PO_SUPPLIER_NOT_PENDING');
     }
 
     const updated = await prisma.purchase_Order.update({

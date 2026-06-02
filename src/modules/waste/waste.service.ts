@@ -16,12 +16,12 @@ export class WasteService {
     // 1. Check barang exists
     const barang = await prisma.stok.findUnique({ where: { id: data.id_barang } });
     if (!barang) {
-      throw new NotFoundError('Item not found', 'BARANG_NOT_FOUND');
+      throw new NotFoundError('Barang tidak ditemukan', 'BARANG_NOT_FOUND');
     }
 
     // 2. Check sufficient stock
     if (barang.jumlah_saat_ini < data.jumlah_terbuang) {
-      throw new ConflictError('Insufficient stock for waste reporting', 'INSUFFICIENT_STOCK');
+      throw new ConflictError('Stok tidak mencukupi untuk pelaporan barang rusak/waste', 'INSUFFICIENT_STOCK');
     }
 
     // 3. Get harga_satuan dari Detail_PO (terakhir)

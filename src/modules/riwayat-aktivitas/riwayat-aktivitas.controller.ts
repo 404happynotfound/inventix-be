@@ -14,7 +14,7 @@ export class RiwayatAktivitasController {
   getById = async (req: Request, res: Response) => {
     const log = await this.riwayatService.getById(Number(req.params.id));
     if (!log) {
-      throw new NotFoundError('Activity log not found', 'ACTIVITY_LOG_NOT_FOUND');
+      throw new NotFoundError('Log aktivitas tidak ditemukan', 'ACTIVITY_LOG_NOT_FOUND');
     }
     res.json(successResponse(log));
   };
