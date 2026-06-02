@@ -138,24 +138,28 @@ registerRoute({
 router.patch('/:id/owner-approve',
   authenticate,
   validateRequest(PurchaseOrderIdParamSchema),
+  validateResponse(PurchaseOrderResponseSchema),
   controller.ownerApprove
 );
 
 router.patch('/:id/owner-reject',
   authenticate,
   validateRequest(PurchaseOrderIdParamSchema),
+  validateResponse(PurchaseOrderResponseSchema),
   controller.ownerReject
 );
 
 router.patch('/:id/supplier-confirm',
   authenticate,
   validateRequest(PurchaseOrderIdParamSchema),
+  validateResponse(PurchaseOrderResponseSchema),
   controller.supplierConfirm
 );
 
 router.patch('/:id/supplier-reject',
   authenticate,
   validateRequest(PurchaseOrderIdParamSchema),
+  validateResponse(PurchaseOrderResponseSchema),
   controller.supplierReject
 );
 

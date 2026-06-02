@@ -1,5 +1,5 @@
 import prisma from '../../config/prisma';
-import { NotFoundError, ConflictError } from '../../utils/errors';
+import { NotFoundError, ConflictError, ForbiddenError } from '../../utils/errors';
 import { CreatePurchaseOrderSchema, UpdatePurchaseOrderSchema } from './purchase-order.schema';
 import { z } from 'zod';
 import { Purchase_Order, Detail_PO, StatusPO } from '../../../generated/prisma';
@@ -79,6 +79,9 @@ export class PurchaseOrderService {
         const stock = await tx.stok.findUnique({ where: { id: item.stok_id } });
         if (!stock) {
           throw new NotFoundError(`Stock item with ID ${item.stok_id} not found`, 'STOCK_NOT_FOUND');
+        }
+        if (stock.supplier_id !== data.supplier_id) {
+          throw new ConflictError(`Stock item "${stock.nama}" does not belong to the selected supplier`, 'SUPPLIER_MISMATCH');
         }
         calculatedTotal += item.jumlah_dipesan * item.harga_satuan;
       }
@@ -192,10 +195,14 @@ export class PurchaseOrderService {
         await tx.detail_PO.deleteMany({ where: { po_id: id } });
         
         let calculatedTotal = 0;
+        const currentSupplierId = data.supplier_id || oldPO.supplier_id;
         for (const item of data.detail_po) {
           const stock = await tx.stok.findUnique({ where: { id: item.stok_id } });
           if (!stock) {
             throw new NotFoundError(`Stock item with ID ${item.stok_id} not found`, 'STOCK_NOT_FOUND');
+          }
+          if (stock.supplier_id !== currentSupplierId) {
+            throw new ConflictError(`Stock item "${stock.nama}" does not belong to the selected supplier`, 'SUPPLIER_MISMATCH');
           }
           calculatedTotal += item.jumlah_dipesan * item.harga_satuan;
 
@@ -274,6 +281,11 @@ export class PurchaseOrderService {
   }
 
   async ownerApprove(id: number, ownerId: number) {
+    const actor = await prisma.akun.findUnique({ where: { id: ownerId } });
+    if (!actor || actor.peran !== 'OWNER') {
+      throw new ForbiddenError('Only an OWNER can approve purchase orders', 'FORBIDDEN_PO_APPROVAL');
+    }
+
     const po = await this.getById(id);
 
     if (po.status !== 'MENUNGGU_PERSETUJUAN') {
@@ -304,6 +316,11 @@ export class PurchaseOrderService {
   }
 
   async ownerReject(id: number, ownerId: number) {
+    const actor = await prisma.akun.findUnique({ where: { id: ownerId } });
+    if (!actor || actor.peran !== 'OWNER') {
+      throw new ForbiddenError('Only an OWNER can reject purchase orders', 'FORBIDDEN_PO_APPROVAL');
+    }
+
     const po = await this.getById(id);
 
     if (po.status !== 'MENUNGGU_PERSETUJUAN') {
@@ -335,6 +352,11 @@ export class PurchaseOrderService {
 
   async supplierConfirm(id: number, actorId: number) {
     const po = await this.getById(id);
+
+    const supplier = await prisma.supplier.findUnique({ where: { user_id: actorId } });
+    if (!supplier || supplier.id !== po.supplier_id) {
+      throw new ForbiddenError('Only the assigned supplier can confirm this purchase order', 'FORBIDDEN_PO_SUPPLIER_ACTION');
+    }
 
     if (po.status !== 'DISETUJUI') {
       throw new ConflictError('PO must be approved by owner before supplier can confirm', 'PO_NOT_APPROVED');
@@ -408,6 +430,11 @@ export class PurchaseOrderService {
 
   async supplierReject(id: number, actorId: number) {
     const po = await this.getById(id);
+
+    const supplier = await prisma.supplier.findUnique({ where: { user_id: actorId } });
+    if (!supplier || supplier.id !== po.supplier_id) {
+      throw new ForbiddenError('Only the assigned supplier can reject this purchase order', 'FORBIDDEN_PO_SUPPLIER_ACTION');
+    }
 
     if (po.status !== 'DISETUJUI') {
       throw new ConflictError('PO must be approved before supplier can reject', 'PO_NOT_APPROVED');
