@@ -143,11 +143,13 @@ export class DashboardService {
       data: expiredItems.map(d => {
         const differenceInTime = d.tanggal_kedaluwarsa!.getTime() - now.getTime();
         const hari_tersisa = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+        const formattedDate = d.tanggal_kedaluwarsa!.toISOString();
         return {
           id: d.id,
           nama: d.nama,
           kode_sku: d.kode_sku,
-          tanggal_kedaluwarsa: d.tanggal_kedaluwarsa!.toISOString(),
+          tanggal_kedaluwarsa: formattedDate,
+          tanggal_expired: formattedDate,
           hari_tersisa,
           jumlah_saat_ini: d.jumlah_saat_ini,
         };

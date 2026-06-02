@@ -55,6 +55,7 @@ export const KadaluarsaSchema = registry.register(
       nama: z.string(),
       kode_sku: z.string(),
       tanggal_kedaluwarsa: z.string().datetime(),
+      tanggal_expired: z.string().datetime(),
       hari_tersisa: z.number().int(),
       jumlah_saat_ini: z.number().int(),
     })),

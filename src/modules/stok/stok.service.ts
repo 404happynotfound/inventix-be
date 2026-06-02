@@ -73,10 +73,13 @@ export class StokService {
       throw new NotFoundError('Supplier not found', 'SUPPLIER_NOT_FOUND');
     }
 
+    const { tanggal_expired, tanggal_kedaluwarsa, ...prismaData } = data;
+    const expiredDateStr = tanggal_kedaluwarsa || tanggal_expired;
+
     const stock = await prisma.stok.create({
       data: {
-        ...data,
-        tanggal_kedaluwarsa: data.tanggal_kedaluwarsa ? new Date(data.tanggal_kedaluwarsa) : null,
+        ...prismaData,
+        tanggal_kedaluwarsa: expiredDateStr ? new Date(expiredDateStr) : null,
       },
     });
 
@@ -119,9 +122,12 @@ export class StokService {
       }
     }
 
-    const updateData: any = { ...data };
-    if (data.tanggal_kedaluwarsa !== undefined) {
-      updateData.tanggal_kedaluwarsa = data.tanggal_kedaluwarsa ? new Date(data.tanggal_kedaluwarsa) : null;
+    const { tanggal_expired, tanggal_kedaluwarsa, ...prismaData } = data;
+    const updateData: any = { ...prismaData };
+
+    const expiredDateStr = tanggal_kedaluwarsa !== undefined ? tanggal_kedaluwarsa : tanggal_expired;
+    if (expiredDateStr !== undefined) {
+      updateData.tanggal_kedaluwarsa = expiredDateStr ? new Date(expiredDateStr) : null;
     }
 
     const stock = await prisma.stok.update({
@@ -168,9 +174,11 @@ export class StokService {
   }
 
   private formatStock(stock: Stok & { klasifikasi?: any; supplier?: any }) {
+    const formattedDate = stock.tanggal_kedaluwarsa ? stock.tanggal_kedaluwarsa.toISOString() : null;
     return {
       ...stock,
-      tanggal_kedaluwarsa: stock.tanggal_kedaluwarsa ? stock.tanggal_kedaluwarsa.toISOString() : null,
+      tanggal_kedaluwarsa: formattedDate,
+      tanggal_expired: formattedDate,
       dibuat_pada: stock.dibuat_pada.toISOString(),
       diperbarui_pada: stock.diperbarui_pada.toISOString(),
     };
