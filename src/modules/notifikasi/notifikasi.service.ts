@@ -78,16 +78,22 @@ export class NotifikasiService {
   }
 
   async performNotificationCheck() {
-    // Check for stok_minimum
-    const lowStockItems = await prisma.$queryRaw<any[]>`
-      SELECT DISTINCT s.id, s.nama, s.kode_sku, s.jumlah_saat_ini
-      FROM "Stok" s
-      WHERE s.jumlah_saat_ini < (
-        SELECT COALESCE(ks.stok_minimum, 10) as min_stock FROM "Klasifikasi_Stok" ks WHERE ks.id = s.klasifikasi_id
-      )
-    `;
+    // Check for stok_minimum using Prisma Client
+    const lowStockItems = await prisma.stok.findMany({
+      where: {
+        jumlah_saat_ini: {
+          lt: 10,
+        },
+      },
+      select: {
+        id: true,
+        nama: true,
+        kode_sku: true,
+        jumlah_saat_ini: true,
+      },
+    });
 
-    for (const item of lowStockItems as any[]) {
+    for (const item of lowStockItems) {
       await this.createNotifikasiIfNotExists(
         item.id,
         'stok_minimum' as const,

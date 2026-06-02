@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { NotifikasiController } from './notifikasi.controller';
 import { authenticate } from '../../middlewares/authMiddleware';
+import { validateRequest } from '../../middlewares/validate';
+import { validateResponse } from '../../middlewares/validateResponse';
 import {
   NotifikasiListResponseSchema,
   NotifikasiResponseSchema,
   NotifikasiQuerySchema,
+  NotifikasiIdParamSchema,
 } from './notifikasi.schema';
 import { registerRoute } from '../../utils/openapi';
 
@@ -28,6 +31,7 @@ registerRoute({
   tags: ['Notifikasi'],
   summary: 'Mark notification as read',
   protected: true,
+  request: { params: NotifikasiIdParamSchema },
   responses: { 200: { description: 'Success', schema: NotifikasiResponseSchema } },
 });
 
@@ -50,9 +54,19 @@ registerRoute({
 });
 
 // ROUTES
-router.get('/', authenticate, controller.getAll);
+router.get('/',
+  authenticate,
+  validateRequest(NotifikasiQuerySchema),
+  validateResponse(NotifikasiListResponseSchema),
+  controller.getAll
+);
 router.patch('/read-all', authenticate, controller.markAllAsRead);
-router.patch('/:id/read', authenticate, controller.markAsRead);
+router.patch('/:id/read',
+  authenticate,
+  validateRequest(NotifikasiIdParamSchema),
+  validateResponse(NotifikasiResponseSchema),
+  controller.markAsRead
+);
 router.post('/check', authenticate, controller.checkNotifications);
 
 export default router;
