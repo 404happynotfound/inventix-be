@@ -9,8 +9,36 @@ type CreatePurchaseOrderInput = z.infer<typeof CreatePurchaseOrderSchema>['body'
 type UpdatePurchaseOrderInput = z.infer<typeof UpdatePurchaseOrderSchema>['body'];
 
 export class PurchaseOrderService {
-  async getAll() {
+  async getAll(actorId: number) {
+    const actor = await prisma.akun.findUnique({ where: { id: actorId } });
+    if (!actor) {
+      throw new NotFoundError('User not found', 'USER_NOT_FOUND');
+    }
+
+    let whereClause: any = {};
+
+    if (actor.peran === 'SUPPLIER') {
+      const supplier = await prisma.supplier.findUnique({ where: { user_id: actorId } });
+      if (!supplier) {
+        return [];
+      }
+      whereClause = {
+        supplier_id: supplier.id,
+        NOT: [
+          { status: 'MENUNGGU_PERSETUJUAN' },
+          { status: 'DRAFT' },
+          {
+            AND: [
+              { status: 'DITOLAK' },
+              { status_supplier: 'MENUNGGU_KONFIRMASI' }
+            ]
+          }
+        ]
+      };
+    }
+
     const pos = await prisma.purchase_Order.findMany({
+      where: whereClause,
       orderBy: { dibuat_pada: 'desc' },
       include: {
         pembuat: {
@@ -34,7 +62,7 @@ export class PurchaseOrderService {
     return pos.map((po) => this.formatPO(po));
   }
 
-  async getById(id: number) {
+  async getById(id: number, actorId?: number) {
     const po = await prisma.purchase_Order.findUnique({
       where: { id },
       include: {
@@ -59,6 +87,24 @@ export class PurchaseOrderService {
     if (!po) {
       throw new NotFoundError('Purchase Order not found', 'PO_NOT_FOUND');
     }
+
+    if (actorId !== undefined) {
+      const actor = await prisma.akun.findUnique({ where: { id: actorId } });
+      if (actor && actor.peran === 'SUPPLIER') {
+        const supplier = await prisma.supplier.findUnique({ where: { user_id: actorId } });
+        if (!supplier || po.supplier_id !== supplier.id) {
+          throw new ForbiddenError('You do not have permission to view this purchase order', 'FORBIDDEN_PO_ACCESS');
+        }
+        if (
+          po.status === 'MENUNGGU_PERSETUJUAN' ||
+          po.status === 'DRAFT' ||
+          (po.status === 'DITOLAK' && po.status_supplier === 'MENUNGGU_KONFIRMASI')
+        ) {
+          throw new ForbiddenError('You do not have permission to view this purchase order', 'FORBIDDEN_PO_ACCESS');
+        }
+      }
+    }
+
     return this.formatPO(po);
   }
 
@@ -351,7 +397,7 @@ export class PurchaseOrderService {
   }
 
   async supplierConfirm(id: number, actorId: number) {
-    const po = await this.getById(id);
+    const po = await this.getById(id, actorId);
 
     const supplier = await prisma.supplier.findUnique({ where: { user_id: actorId } });
     if (!supplier || supplier.id !== po.supplier_id) {
@@ -429,7 +475,7 @@ export class PurchaseOrderService {
   }
 
   async supplierReject(id: number, actorId: number) {
-    const po = await this.getById(id);
+    const po = await this.getById(id, actorId);
 
     const supplier = await prisma.supplier.findUnique({ where: { user_id: actorId } });
     if (!supplier || supplier.id !== po.supplier_id) {
