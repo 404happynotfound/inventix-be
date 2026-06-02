@@ -33,4 +33,28 @@ export class PurchaseOrderController {
     await this.service.delete(Number(req.params.id), actorId);
     res.json(successResponse(null, 'Purchase Order deleted successfully'));
   };
+
+  ownerApprove = async (req: AuthRequest, res: Response) => {
+    const actorId = req.user!.id;
+    const po = await this.service.ownerApprove(Number(req.params.id), actorId);
+    res.json(successResponse(po, 'Purchase Order approved by owner'));
+  };
+
+  ownerReject = async (req: AuthRequest, res: Response) => {
+    const actorId = req.user!.id;
+    const po = await this.service.ownerReject(Number(req.params.id), actorId);
+    res.json(successResponse(po, 'Purchase Order rejected by owner'));
+  };
+
+  supplierConfirm = async (req: AuthRequest, res: Response) => {
+    const actorId = req.user!.id;
+    const po = await this.service.supplierConfirm(Number(req.params.id), actorId);
+    res.json(successResponse(po, 'Purchase Order confirmed by supplier, stock updated'));
+  };
+
+  supplierReject = async (req: AuthRequest, res: Response) => {
+    const actorId = req.user!.id;
+    const po = await this.service.supplierReject(Number(req.params.id), actorId);
+    res.json(successResponse(po, 'Purchase Order rejected by supplier'));
+  };
 }
