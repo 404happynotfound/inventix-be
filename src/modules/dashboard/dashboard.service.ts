@@ -21,7 +21,6 @@ export class DashboardService {
   }
 
   async getTrenPengeluaran(periode: string = 'daily', startDate?: string, endDate?: string) {
-    let dateFormat = '%Y-%m-%d';
     let intervalQuery = `DATE_TRUNC('day', po.tanggal_po)`;
 
     if (periode === 'weekly') {
@@ -33,10 +32,9 @@ export class DashboardService {
     let query = `
       SELECT 
         ${intervalQuery}::DATE as periode,
-        COUNT(DISTINCT po.id) as jumlah_transaksi,
-        SUM(dp.jumlah_dipesan * dp.harga_satuan) as total_pengeluaran
-      FROM "Detail_PO" dp
-      JOIN "Purchase_Order" po ON dp.po_id = po.id
+        COUNT(po.id) as jumlah_transaksi,
+        SUM(po.total_nilai) as total_pengeluaran
+      FROM "Purchase_Order" po
       WHERE po.status IN ('DISETUJUI', 'DIKIRIM', 'SELESAI')
     `;
 
@@ -63,32 +61,42 @@ export class DashboardService {
   async getStokRendah(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
 
-    const result = await prisma.$queryRaw`
-      SELECT 
-        s.id,
-        s.nama,
-        s.kode_sku,
-        s.jumlah_saat_ini,
-        sup.nama as supplier_nama,
-        COUNT(*) OVER() as total
-      FROM "Stok" s
-      JOIN "Supplier" sup ON s.supplier_id = sup.id
-      WHERE s.jumlah_saat_ini < COALESCE((SELECT stok_minimum FROM "Klasifikasi_Stok" WHERE id = s.klasifikasi_id), 10)
-      ORDER BY s.jumlah_saat_ini ASC
-      LIMIT ${limit}
-      OFFSET ${skip}
-    `;
-
-    const data = (result as any[]);
-    const total = data[0]?.total || 0;
+    const [stokRendah, total] = await Promise.all([
+      prisma.stok.findMany({
+        where: {
+          jumlah_saat_ini: {
+            lt: 10,
+          },
+        },
+        include: {
+          supplier: {
+            select: {
+              nama: true,
+            },
+          },
+        },
+        orderBy: {
+          jumlah_saat_ini: 'asc',
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.stok.count({
+        where: {
+          jumlah_saat_ini: {
+            lt: 10,
+          },
+        },
+      }),
+    ]);
 
     return {
-      data: data.map(d => ({
+      data: stokRendah.map(d => ({
         id: d.id,
         nama: d.nama,
         kode_sku: d.kode_sku,
         jumlah_saat_ini: d.jumlah_saat_ini,
-        supplier_nama: d.supplier_nama,
+        supplier_nama: d.supplier.nama,
       })),
       pagination: {
         total,
@@ -101,39 +109,49 @@ export class DashboardService {
 
   async getKadaluarsa(page: number = 1, limit: number = 10, days: number = 7) {
     const skip = (page - 1) * limit;
+    const now = new Date();
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + days);
 
-    const result = await prisma.$queryRaw`
-      SELECT 
-        s.id,
-        s.nama,
-        s.kode_sku,
-        s.tanggal_kedaluwarsa,
-        s.jumlah_saat_ini,
-        COUNT(*) OVER() as total,
-        EXTRACT(DAY FROM (s.tanggal_kedaluwarsa - NOW())) as hari_tersisa
-      FROM "Stok" s
-      WHERE s.tanggal_kedaluwarsa IS NOT NULL
-        AND s.tanggal_kedaluwarsa <= ${targetDate}::TIMESTAMP
-        AND s.tanggal_kedaluwarsa > NOW()
-      ORDER BY s.tanggal_kedaluwarsa ASC
-      LIMIT ${limit}
-      OFFSET ${skip}
-    `;
-
-    const data = (result as any[]);
-    const total = data[0]?.total || 0;
+    const [expiredItems, total] = await Promise.all([
+      prisma.stok.findMany({
+        where: {
+          tanggal_kedaluwarsa: {
+            not: null,
+            lte: targetDate,
+            gt: now,
+          },
+        },
+        orderBy: {
+          tanggal_kedaluwarsa: 'asc',
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.stok.count({
+        where: {
+          tanggal_kedaluwarsa: {
+            not: null,
+            lte: targetDate,
+            gt: now,
+          },
+        },
+      }),
+    ]);
 
     return {
-      data: data.map(d => ({
-        id: d.id,
-        nama: d.nama,
-        kode_sku: d.kode_sku,
-        tanggal_kedaluwarsa: d.tanggal_kedaluwarsa?.toISOString(),
-        hari_tersisa: Math.ceil(d.hari_tersisa),
-        jumlah_saat_ini: d.jumlah_saat_ini,
-      })),
+      data: expiredItems.map(d => {
+        const differenceInTime = d.tanggal_kedaluwarsa!.getTime() - now.getTime();
+        const hari_tersisa = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+        return {
+          id: d.id,
+          nama: d.nama,
+          kode_sku: d.kode_sku,
+          tanggal_kedaluwarsa: d.tanggal_kedaluwarsa!.toISOString(),
+          hari_tersisa,
+          jumlah_saat_ini: d.jumlah_saat_ini,
+        };
+      }),
       pagination: {
         total,
         page,
@@ -184,34 +202,37 @@ export class DashboardService {
   }
 
   private async countStokRendah(): Promise<number> {
-    const result = await prisma.$queryRaw`
-      SELECT COUNT(*) as count
-      FROM "Stok" s
-      WHERE s.jumlah_saat_ini < COALESCE((SELECT stok_minimum FROM "Klasifikasi_Stok" WHERE id = s.klasifikasi_id), 10)
-    `;
-    return Number((result as any[])[0]?.count || 0);
+    return prisma.stok.count({
+      where: {
+        jumlah_saat_ini: {
+          lt: 10,
+        },
+      },
+    });
   }
 
   private async countKadaluarsa(): Promise<number> {
-    const today = new Date();
+    const now = new Date();
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
 
-    const result = await prisma.$queryRaw`
-      SELECT COUNT(*) as count
-      FROM "Stok" s
-      WHERE s.tanggal_kedaluwarsa IS NOT NULL
-        AND s.tanggal_kedaluwarsa <= ${nextWeek}::TIMESTAMP
-        AND s.tanggal_kedaluwarsa > NOW()
-    `;
-    return Number((result as any[])[0]?.count || 0);
+    return prisma.stok.count({
+      where: {
+        tanggal_kedaluwarsa: {
+          not: null,
+          lte: nextWeek,
+          gt: now,
+        },
+      },
+    });
   }
 
   private async calculateTotalStokValue(): Promise<number> {
-    const result = await prisma.$queryRaw`
-      SELECT COALESCE(SUM(CAST(s.jumlah_saat_ini AS BIGINT)), 0) as total_value
-      FROM "Stok" s
-    `;
-    return Number((result as any[])[0]?.total_value || 0);
+    const result = await prisma.stok.aggregate({
+      _sum: {
+        jumlah_saat_ini: true,
+      },
+    });
+    return result._sum.jumlah_saat_ini || 0;
   }
 }

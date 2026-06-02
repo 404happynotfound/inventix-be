@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { DashboardController } from './dashboard.controller';
 import { authenticate } from '../../middlewares/authMiddleware';
+import { validateRequest } from '../../middlewares/validate';
+import { validateResponse } from '../../middlewares/validateResponse';
 import {
   DashboardSummarySchema,
   TrenPengeluaranSchema,
@@ -65,10 +67,34 @@ registerRoute({
 });
 
 // ROUTES
-router.get('/summary', authenticate, controller.getSummary);
-router.get('/tren-pengeluaran', authenticate, controller.getTrenPengeluaran);
-router.get('/stok-rendah', authenticate, controller.getStokRendah);
-router.get('/kadaluarsa', authenticate, controller.getKadaluarsa);
-router.get('/waste-summary', authenticate, controller.getWasteSummary);
+router.get('/summary',
+  authenticate,
+  validateResponse(DashboardSummarySchema),
+  controller.getSummary
+);
+router.get('/tren-pengeluaran',
+  authenticate,
+  validateRequest(DashboardQuerySchema),
+  validateResponse(TrenPengeluaranSchema),
+  controller.getTrenPengeluaran
+);
+router.get('/stok-rendah',
+  authenticate,
+  validateRequest(DashboardQuerySchema),
+  validateResponse(StokRendahSchema),
+  controller.getStokRendah
+);
+router.get('/kadaluarsa',
+  authenticate,
+  validateRequest(DashboardQuerySchema),
+  validateResponse(KadaluarsaSchema),
+  controller.getKadaluarsa
+);
+router.get('/waste-summary',
+  authenticate,
+  validateRequest(DashboardQuerySchema),
+  validateResponse(WasteSummarySchema),
+  controller.getWasteSummary
+);
 
 export default router;
