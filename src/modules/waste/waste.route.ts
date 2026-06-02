@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { WasteController } from './waste.controller';
 import { authenticate } from '../../middlewares/authMiddleware';
 import { validateRequest } from '../../middlewares/validate';
+import { validateResponse } from '../../middlewares/validateResponse';
 import {
   WasteListResponseSchema,
   WasteResponseSchema,
@@ -46,8 +47,22 @@ registerRoute({
 });
 
 // ROUTES
-router.post('/', authenticate, validateRequest(CreateWasteSchema), controller.create);
-router.get('/export', authenticate, controller.exportCSV);
-router.get('/', authenticate, controller.getAll);
+router.post('/',
+  authenticate,
+  validateRequest(CreateWasteSchema),
+  validateResponse(WasteResponseSchema),
+  controller.create
+);
+router.get('/export',
+  authenticate,
+  validateRequest(WasteExportQuerySchema),
+  controller.exportCSV
+);
+router.get('/',
+  authenticate,
+  validateRequest(WasteQuerySchema),
+  validateResponse(WasteListResponseSchema),
+  controller.getAll
+);
 
 export default router;

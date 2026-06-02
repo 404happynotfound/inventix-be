@@ -1,5 +1,5 @@
 import prisma from '../../config/prisma';
-import { NotFoundError } from '../../utils/errors';
+import { NotFoundError, ConflictError } from '../../utils/errors';
 import { NotifikasiService } from '../notifikasi/notifikasi.service';
 import { Decimal } from 'decimal.js';
 
@@ -21,7 +21,7 @@ export class WasteService {
 
     // 2. Check sufficient stock
     if (barang.jumlah_saat_ini < data.jumlah_terbuang) {
-      throw new Error('Insufficient stock');
+      throw new ConflictError('Insufficient stock for waste reporting', 'INSUFFICIENT_STOCK');
     }
 
     // 3. Get harga_satuan dari Detail_PO (terakhir)
