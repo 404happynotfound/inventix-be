@@ -13,7 +13,6 @@ enum Peran {
   ADMIN
   SUPPLIER
   GUDANG
-  PEMBELI
 }
 
 // Enum untuk jenis aksi
