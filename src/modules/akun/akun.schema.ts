@@ -10,7 +10,7 @@ export const AkunSchema = registry.register(
     id: z.coerce.number().int().openapi({ example: 1 }),
     nama: z.string().openapi({ example: 'John Doe' }),
     email: z.string().email().openapi({ example: 'user@example.com' }),
-    peran: PeranEnum.openapi({ example: 'PEMBELI' }),
+    peran: PeranEnum.openapi({ example: 'ADMIN' }),
     dibuat_pada: z.string().datetime().openapi({ example: '2023-01-01T00:00:00Z' }),
     diperbarui_pada: z.string().datetime().openapi({ example: '2023-01-01T00:00:00Z' }),
   })
@@ -25,7 +25,7 @@ export const CreateAkunSchema = registry.register(
       nama: z.string().min(2),
       email: z.string().email(),
       password: z.string().min(6),
-      peran: PeranEnum.default('PEMBELI'),
+      peran: PeranEnum.default('ADMIN'),
     }),
   })
 );

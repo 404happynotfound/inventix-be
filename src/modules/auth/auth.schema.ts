@@ -9,7 +9,7 @@ export const RegisterRequestSchema = registry.register(
       email: z.email().openapi({ example: 'user@example.com' }),
       password: z.string().min(6).openapi({ example: 'secret123' }),
       nama: z.string().min(2).openapi({ example: 'John Doe' }),
-      peran: PeranEnum.default('PEMBELI').openapi({ example: 'PEMBELI' }),
+      peran: PeranEnum.default('ADMIN').openapi({ example: 'ADMIN' }),
     }),
   })
 );
