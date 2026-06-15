@@ -134,7 +134,7 @@ async function main() {
             email: "supplier.daging@cafe.com",
             nomor_telepon: "081111000002",
             deskripsi:
-                "Supplier beef bacon, smoked duck, chicken katsu, tuna kaleng, dan telur",
+                "Supplier beef bacon, smoked duck, chicken katsu, tuna, dan telur",
             user_id: akunSupplierDaging.id,
         },
     });
@@ -176,7 +176,7 @@ async function main() {
             email: "supplier.saus@cafe.com",
             nomor_telepon: "081111000005",
             deskripsi:
-                "Supplier saus dan bumbu: hoisin sauce, tomato sauce, cream cheese, mayonnaise, pandan kaya",
+                "Supplier saus dan bumbu: hoisin sauce, tomato sauce, cream cheese, mayonnaise",
             user_id: akunSupplierSaus.id,
         },
     });
@@ -201,7 +201,7 @@ async function main() {
         update: {},
         create: {
             jenis: "Protein dan Daging",
-            deskripsi: "r",
+            deskripsi: "",
         },
     });
 
@@ -275,6 +275,7 @@ async function main() {
             supplier_id: supplierTepung.id,
             satuan: "kilogram",
             jumlah_saat_ini: 10,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -289,6 +290,7 @@ async function main() {
             supplier_id: supplierTepung.id,
             satuan: "kilogram",
             jumlah_saat_ini: 5,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -303,6 +305,7 @@ async function main() {
             supplier_id: supplierTepung.id,
             satuan: "kilogram",
             jumlah_saat_ini: 3,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -316,6 +319,7 @@ async function main() {
             supplier_id: supplierTepung.id,
             satuan: "gram",
             jumlah_saat_ini: 500,
+            tanggal_kedaluwarsa: new Date("2026-09-15"),
         },
     });
 
@@ -329,6 +333,7 @@ async function main() {
             supplier_id: supplierTepung.id,
             satuan: "kilogram",
             jumlah_saat_ini: 3,
+            tanggal_kedaluwarsa: new Date("2027-06-15"),
         },
     });
 
@@ -342,6 +347,7 @@ async function main() {
             supplier_id: supplierTepung.id,
             satuan: "kilogram",
             jumlah_saat_ini: 2,
+            tanggal_kedaluwarsa: new Date("2027-06-15"),
         },
     });
 
@@ -355,6 +361,7 @@ async function main() {
             supplier_id: supplierTepung.id,
             satuan: "gram",
             jumlah_saat_ini: 200,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -368,6 +375,7 @@ async function main() {
             supplier_id: supplierTepung.id,
             satuan: "gram",
             jumlah_saat_ini: 500,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -381,6 +389,7 @@ async function main() {
             supplier_id: supplierTepung.id,
             satuan: "gram",
             jumlah_saat_ini: 500,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -393,8 +402,9 @@ async function main() {
             kode_sku: "PRO-001",
             klasifikasi_id: klasifikasiProtein.id,
             supplier_id: supplierDaging.id,
-            satuan: "kilogram",
-            jumlah_saat_ini: 3,
+            satuan: "gram",
+            jumlah_saat_ini: 500,
+            tanggal_kedaluwarsa: new Date("2026-06-22"),
         },
     });
 
@@ -406,8 +416,9 @@ async function main() {
             kode_sku: "PRO-002",
             klasifikasi_id: klasifikasiProtein.id,
             supplier_id: supplierDaging.id,
-            satuan: "kilogram",
-            jumlah_saat_ini: 2,
+            satuan: "gram",
+            jumlah_saat_ini: 500,
+            tanggal_kedaluwarsa: new Date("2026-07-15"),
         },
     });
 
@@ -421,19 +432,21 @@ async function main() {
             supplier_id: supplierDaging.id,
             satuan: "pcs",
             jumlah_saat_ini: 10,
+            tanggal_kedaluwarsa: new Date("2026-07-15"),
         },
     });
 
-    const stokTunaKaleng = await prisma.stok.upsert({
+    const stokTuna = await prisma.stok.upsert({
         where: { kode_sku: "PRO-004" },
         update: {},
         create: {
-            nama: "Tuna Kaleng",
+            nama: "Tuna",
             kode_sku: "PRO-004",
             klasifikasi_id: klasifikasiProtein.id,
             supplier_id: supplierDaging.id,
-            satuan: "kaleng",
-            jumlah_saat_ini: 20,
+            satuan: "gram",
+            jumlah_saat_ini: 200,
+            tanggal_kedaluwarsa: new Date("2026-07-15"),
         },
     });
 
@@ -447,6 +460,7 @@ async function main() {
             supplier_id: supplierDaging.id,
             satuan: "butir",
             jumlah_saat_ini: 100,
+            tanggal_kedaluwarsa: new Date("2026-07-06"),
         },
     });
 
@@ -461,6 +475,7 @@ async function main() {
             supplier_id: supplierSayur.id,
             satuan: "kilogram",
             jumlah_saat_ini: 1,
+            tanggal_kedaluwarsa: new Date("2026-06-20"),
         },
     });
 
@@ -474,6 +489,7 @@ async function main() {
             supplier_id: supplierSayur.id,
             satuan: "kilogram",
             jumlah_saat_ini: 1,
+            tanggal_kedaluwarsa: new Date("2026-06-20"),
         },
     });
 
@@ -486,7 +502,8 @@ async function main() {
             klasifikasi_id: klasifikasiSayur.id,
             supplier_id: supplierSayur.id,
             satuan: "kilogram",
-            jumlah_saat_ini: 3,
+            jumlah_saat_ini: 1,
+            tanggal_kedaluwarsa: new Date("2026-06-20"),
         },
     });
 
@@ -500,6 +517,7 @@ async function main() {
             supplier_id: supplierSayur.id,
             satuan: "kilogram",
             jumlah_saat_ini: 3,
+            tanggal_kedaluwarsa: new Date("2026-08-15"),
         },
     });
 
@@ -513,6 +531,7 @@ async function main() {
             supplier_id: supplierSayur.id,
             satuan: "kilogram",
             jumlah_saat_ini: 3,
+            tanggal_kedaluwarsa: new Date("2026-08-15"),
         },
     });
 
@@ -526,6 +545,7 @@ async function main() {
             supplier_id: supplierSayur.id,
             satuan: "buah",
             jumlah_saat_ini: 30,
+            tanggal_kedaluwarsa: new Date("2026-07-06"),
         },
     });
 
@@ -539,6 +559,7 @@ async function main() {
             supplier_id: supplierSayur.id,
             satuan: "kilogram",
             jumlah_saat_ini: 3,
+            tanggal_kedaluwarsa: new Date("2026-07-06"),
         },
     });
 
@@ -552,85 +573,50 @@ async function main() {
             supplier_id: supplierSayur.id,
             satuan: "kilogram",
             jumlah_saat_ini: 3,
+            tanggal_kedaluwarsa: new Date("2026-07-06"),
         },
     });
 
     // Saus dan bumbu
-    const stokGarlicAioli = await prisma.stok.upsert({
+    const stokHoisinSauce = await prisma.stok.upsert({
         where: { kode_sku: "SAU-001" },
         update: {},
         create: {
-            nama: "Garlic Aioli",
+            nama: "Hoisin Sauce",
             kode_sku: "SAU-001",
             klasifikasi_id: klasifikasiSaus.id,
             supplier_id: supplierSaus.id,
             satuan: "liter",
             jumlah_saat_ini: 2,
+            tanggal_kedaluwarsa: new Date("2026-09-15"),
         },
     });
 
-    const stokHoisinSauce = await prisma.stok.upsert({
+    const stokTomatoSauce = await prisma.stok.upsert({
         where: { kode_sku: "SAU-002" },
         update: {},
         create: {
-            nama: "Hoisin Sauce",
+            nama: "Tomato Sauce",
             kode_sku: "SAU-002",
             klasifikasi_id: klasifikasiSaus.id,
             supplier_id: supplierSaus.id,
             satuan: "liter",
             jumlah_saat_ini: 2,
-        },
-    });
-
-    const stokTomatoSauce = await prisma.stok.upsert({
-        where: { kode_sku: "SAU-003" },
-        update: {},
-        create: {
-            nama: "Tomato Sauce",
-            kode_sku: "SAU-003",
-            klasifikasi_id: klasifikasiSaus.id,
-            supplier_id: supplierSaus.id,
-            satuan: "liter",
-            jumlah_saat_ini: 2,
+            tanggal_kedaluwarsa: new Date("2026-09-15"),
         },
     });
 
     const stokMayonnaise = await prisma.stok.upsert({
-        where: { kode_sku: "SAU-004" },
+        where: { kode_sku: "SAU-003" },
         update: {},
         create: {
             nama: "Mayonnaise",
-            kode_sku: "SAU-004",
+            kode_sku: "SAU-003",
             klasifikasi_id: klasifikasiSaus.id,
             supplier_id: supplierSaus.id,
             satuan: "kilogram",
             jumlah_saat_ini: 2,
-        },
-    });
-
-    const stokPandanKaya = await prisma.stok.upsert({
-        where: { kode_sku: "SAU-005" },
-        update: {},
-        create: {
-            nama: "Pandan Kaya Sauce",
-            kode_sku: "SAU-005",
-            klasifikasi_id: klasifikasiSaus.id,
-            supplier_id: supplierSaus.id,
-            satuan: "liter",
-            jumlah_saat_ini: 1,
-        },
-    });
-
-    const stokMushroomSoup = await prisma.stok.upsert({
-        where: { kode_sku: "SAU-006" },
-        update: {},
-        create: {
-            nama: "Mushroom Soup",
-            kode_sku: "SAU-006",
-            klasifikasi_id: klasifikasiSaus.id,
-            supplier_id: supplierSaus.id,
-            satuan: "liter",
-            jumlah_saat_ini: 3,
+            tanggal_kedaluwarsa: new Date("2026-08-15"),
         },
     });
 
@@ -645,6 +631,7 @@ async function main() {
             supplier_id: supplierSaus.id,
             satuan: "kilogram",
             jumlah_saat_ini: 2,
+            tanggal_kedaluwarsa: new Date("2026-06-28"),
         },
     });
 
@@ -658,6 +645,7 @@ async function main() {
             supplier_id: supplierSaus.id,
             satuan: "kilogram",
             jumlah_saat_ini: 2,
+            tanggal_kedaluwarsa: new Date("2026-07-06"),
         },
     });
 
@@ -670,7 +658,8 @@ async function main() {
             klasifikasi_id: klasifikasiDairy.id,
             supplier_id: supplierMinuman.id,
             satuan: "liter",
-            jumlah_saat_ini: 5,
+            jumlah_saat_ini: 3,
+            tanggal_kedaluwarsa: new Date("2026-06-21"),
         },
     });
 
@@ -685,6 +674,7 @@ async function main() {
             supplier_id: supplierTepung.id,
             satuan: "liter",
             jumlah_saat_ini: 3,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -698,6 +688,7 @@ async function main() {
             supplier_id: supplierSaus.id,
             satuan: "liter",
             jumlah_saat_ini: 1,
+            tanggal_kedaluwarsa: new Date("2026-09-15"),
         },
     });
 
@@ -711,6 +702,7 @@ async function main() {
             supplier_id: supplierTepung.id,
             satuan: "liter",
             jumlah_saat_ini: 5,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -725,6 +717,7 @@ async function main() {
             supplier_id: supplierMinuman.id,
             satuan: "kilogram",
             jumlah_saat_ini: 3,
+            tanggal_kedaluwarsa: new Date("2026-09-15"),
         },
     });
 
@@ -738,6 +731,7 @@ async function main() {
             supplier_id: supplierMinuman.id,
             satuan: "liter",
             jumlah_saat_ini: 1,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -751,6 +745,7 @@ async function main() {
             supplier_id: supplierMinuman.id,
             satuan: "liter",
             jumlah_saat_ini: 1,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -764,6 +759,7 @@ async function main() {
             supplier_id: supplierMinuman.id,
             satuan: "liter",
             jumlah_saat_ini: 1,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -777,6 +773,7 @@ async function main() {
             supplier_id: supplierMinuman.id,
             satuan: "pcs",
             jumlah_saat_ini: 100,
+            tanggal_kedaluwarsa: new Date("2027-06-15"),
         },
     });
 
@@ -790,6 +787,7 @@ async function main() {
             supplier_id: supplierMinuman.id,
             satuan: "pcs",
             jumlah_saat_ini: 100,
+            tanggal_kedaluwarsa: new Date("2027-06-15"),
         },
     });
 
@@ -803,6 +801,7 @@ async function main() {
             supplier_id: supplierMinuman.id,
             satuan: "gram",
             jumlah_saat_ini: 500,
+            tanggal_kedaluwarsa: new Date("2027-06-15"),
         },
     });
 
@@ -816,6 +815,7 @@ async function main() {
             supplier_id: supplierMinuman.id,
             satuan: "kilogram",
             jumlah_saat_ini: 1,
+            tanggal_kedaluwarsa: new Date("2027-06-15"),
         },
     });
 
@@ -829,6 +829,7 @@ async function main() {
             supplier_id: supplierMinuman.id,
             satuan: "liter",
             jumlah_saat_ini: 1,
+            tanggal_kedaluwarsa: new Date("2026-12-15"),
         },
     });
 
@@ -843,6 +844,7 @@ async function main() {
             supplier_id: supplierMinuman.id,
             satuan: "botol",
             jumlah_saat_ini: 20,
+            tanggal_kedaluwarsa: new Date("2028-06-15"),
         },
     });
 
@@ -861,28 +863,25 @@ async function main() {
         { stok: stokRosemary, jumlah: 200 },
         { stok: stokCinnamonPowder, jumlah: 500 },
         { stok: stokIcingGlaze, jumlah: 500 },
-        { stok: stokBeefBacon, jumlah: 3 },
-        { stok: stokSmokedDuck, jumlah: 2 },
+        { stok: stokBeefBacon, jumlah: 500 },
+        { stok: stokSmokedDuck, jumlah: 500 },
         { stok: stokChickenKatsu, jumlah: 10 },
-        { stok: stokTunaKaleng, jumlah: 20 },
+        { stok: stokTuna, jumlah: 200 },
         { stok: stokTelur, jumlah: 100 },
         { stok: stokArugula, jumlah: 1 },
         { stok: stokIcebergLettuce, jumlah: 1 },
-        { stok: stokMushroom, jumlah: 3 },
+        { stok: stokMushroom, jumlah: 1 },
         { stok: stokGherkins, jumlah: 3 },
         { stok: stokBawangPutih, jumlah: 3 },
         { stok: stokBuahLemon, jumlah: 30 },
         { stok: stokKentang, jumlah: 3 },
         { stok: stokUbiJalar, jumlah: 3 },
-        { stok: stokGarlicAioli, jumlah: 2 },
         { stok: stokHoisinSauce, jumlah: 2 },
         { stok: stokTomatoSauce, jumlah: 2 },
         { stok: stokMayonnaise, jumlah: 2 },
-        { stok: stokPandanKaya, jumlah: 1 },
-        { stok: stokMushroomSoup, jumlah: 3 },
         { stok: stokCreamCheese, jumlah: 2 },
         { stok: stokParmesan, jumlah: 2 },
-        { stok: stokSusuFullCream, jumlah: 5 },
+        { stok: stokSusuFullCream, jumlah: 3 },
         { stok: stokMinyakZaitun, jumlah: 3 },
         { stok: stokTruffleOil, jumlah: 1 },
         { stok: stokMinyakGoreng, jumlah: 5},
